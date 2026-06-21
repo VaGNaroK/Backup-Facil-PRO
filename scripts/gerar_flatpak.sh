@@ -22,7 +22,12 @@ echo -e "📦 Versão detectada: ${GREEN}v${VERSION}${NC}"
 echo -e "⏳ Iniciando compilação no contêiner..."
 
 # 2. Roda a compilação (instalando silenciosamente)
-flatpak-builder build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean --user --install
+flatpak-builder build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean --user --install --install-deps-from=flathub
+
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  Erro: Falha ao compilar o Flatpak!${NC}"
+    exit 1
+fi
 
 # 3. Define o nome do arquivo dinamicamente
 BUNDLE_NAME="Backup_Facil_Pro_v${VERSION}.flatpak"
@@ -31,6 +36,11 @@ echo -e "⏳ Gerando o arquivo instalador final..."
 
 # 4. Roda o empacotamento com o nome dinâmico
 flatpak build-bundle ~/.local/share/flatpak/repo "$BUNDLE_NAME" io.github.vagnarok.BackupFacilPro
+
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  Erro: Falha ao gerar o arquivo .flatpak!${NC}"
+    exit 1
+fi
 
 echo -e "${GREEN}✅ Sucesso Absoluto!${NC}"
 echo -e "O instalador ${BLUE}${BUNDLE_NAME}${NC} foi gerado na raiz do projeto."
