@@ -81,6 +81,13 @@ sudo apt install libdbus-1-dev libglib2.0-dev python3-dev
 
 Este é o método recomendado para garantir compatibilidade universal. Todo o processo de compilação e nomeação da versão atual foi automatizado.
 
+**⚠️ Pré-requisitos para empacotamento:**
+Certifique-se de que o sistema possui as ferramentas oficiais do flatpak instaladas:
+```bash
+sudo apt install flatpak flatpak-builder
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+```
+
 1. **Dê permissão de execução ao script (apenas na primeira vez):**
    ```bash
    chmod +x scripts/gerar_flatpak.sh
@@ -95,7 +102,7 @@ Este é o método recomendado para garantir compatibilidade universal. Todo o pr
 3. **Instale o pacote gerado:**
    Você pode dar dois cliques no arquivo gerado através do seu gerenciador de janelas, ou usar o terminal:
    ```bash
-   flatpak install --user ./Backup_Facil_Pro_v0.3.9.flatpak
+   flatpak install --user ./Backup_Facil_Pro_v0.4.0.flatpak
    ```
 
 ## 📦 Como Compilar e Instalar (Linux - .deb)
