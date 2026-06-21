@@ -1,6 +1,18 @@
 📝 Changelog - Backup Fácil Professional
 Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fácil Professional desde o seu início.
 
+## [0.4.0] - 2026-06-21
+
+### Adicionado
+- **Motor de Busca de Duplicatas (fdupes):** Nova aba contendo uma ferramenta profissional de busca de arquivos idênticos, utilizando um rigoroso algoritmo de 4 camadas (Tamanho -> MD5 4KB -> MD5 Total -> Byte-a-byte).
+- **Compressão Multi-Threading:** Adicionado seletor na UI para o usuário escolher o número de threads que o motor `.7z` vai usar (via `py7zr`), alavancando a velocidade de backup em computadores mais robustos.
+
+### Corrigido
+- **Aviso sobre DBUS no Linux:** Omitida a mensagem chata do Plyer resolvendo a ausência da dependência silenciosa `dbus-python` no requirements do ambiente virtual.
+- **Falha de Inicialização do py7zr (Thread Crash):** O erro interno do `py7zr` (Object has no attribute 'header') causado por descarte prematuro da instância do arquivo foi contornado encapsulando a escrita adequadamente no bloco contextual e resolvendo a indentação defeituosa do script de backup.
+- **Visualização de Caminhos:** Ocultado o corte fixo de colunas (Stretch) na árvore de resultados das duplicatas para que o usuário possa redimensionar e ler caminhos de pasta muito compridos.
+- **Visibilidade UI (UX):** Checkboxes customizados na árvore da aba de duplicatas para harmonizar e estarem totalmente visíveis e estéticos no Modo Dark do App.
+
 ## [0.3.9] - 2026-04-12
 
 ### Adicionado

@@ -10,6 +10,9 @@ schedule>=1.2.0
 # Notificações Nativas do Sistema Operacional
 plyer>=2.1.0
 
+# Integração com o DBUS para notificações nativas no Linux
+dbus-python>=1.3.2
+
 # Cofre de Segurança (Ofuscação de Senhas)
 keyring>=24.2.0
 

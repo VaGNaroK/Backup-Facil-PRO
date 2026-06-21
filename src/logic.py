@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 import sys
 import json
 import schedule
@@ -17,7 +18,7 @@ from plyer import notification
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.3.9"
+APP_VERSION = "0.4.0"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
@@ -158,6 +159,8 @@ def save_config(data, profile_name="default"):
         else:
             try:
                 keyring.delete_password("backup_facil_pro", profile_name)
+            except keyring.errors.PasswordDeleteError:
+                pass
             except (keyring.errors.KeyringError, OSError) as e:
                 logger.warning(f"Erro ao deletar senha do keyring: {e}")
         
@@ -290,6 +293,24 @@ def get_files_to_backup_incremental(origins, exclusions=[], filters={}, folder_e
     
     for origin in origins:
         try:
+            if os.path.isfile(origin):
+                file = os.path.basename(origin)
+                src_file = origin
+                rel_path = file
+                
+                if not passes_advanced_filters(src_file, filters): continue
+                if is_excluded(file, exclusions): continue 
+                
+                current_hash = get_file_hash(src_file)
+                current_mtime = os.path.getmtime(src_file)
+                key = f"{origin}|{rel_path}"
+                cursor.execute("SELECT hash FROM arquivos WHERE chave = ?", (key,))
+                result = cursor.fetchone()
+                
+                if not result or result[0] != current_hash:
+                    files_to_backup.append({"path": src_file, "rel_path": rel_path, "origin": origin, "size": os.path.getsize(src_file), "mtime": current_mtime, "hash": current_hash})
+                continue
+
             for root, dirs, files in os.walk(origin):
                 dirs[:] = [d for d in dirs if not d.startswith('.') and d.lower() not in folder_ignore]
                 for file in files:
@@ -318,6 +339,12 @@ def count_files(origins, exclusions=[], filters={}, folder_exclusions=[]):
     folder_ignore = [f.strip().lower() for f in folder_exclusions if f.strip()]
     for origin in origins:
         try:
+            if os.path.isfile(origin):
+                file = os.path.basename(origin)
+                if passes_advanced_filters(origin, filters) and not is_excluded(file, exclusions):
+                    total += 1
+                continue
+
             for root, dirs, files in os.walk(origin):
                 dirs[:] = [d for d in dirs if not d.startswith('.') and d.lower() not in folder_ignore]
                 for file in files:
@@ -393,7 +420,7 @@ def compare_backups(archive1, archive2, password1=None, password2=None):
 def start_backup_process(origins, target, compression_level="Normal", password=None, 
                          exclusions="", retention=5, progress_callback=None, 
                          ui_log_callback=None, speed_callback=None, incremental=False, filters={}, folder_exclusions=[],
-                         volume_size="0"):
+                         volume_size="0", threads=1):
     start_time = time.time()
     backup_pause_event.set(); backup_abort_event.clear() 
     
@@ -456,60 +483,102 @@ def start_backup_process(origins, target, compression_level="Normal", password=N
     files_processed = 0
 
     try:
-        filters_compression = [{'id': py7zr.FILTER_LZMA2, 'preset': presets.get(compression_level, 3)}]
+        if compression_level == "Armazenar":
+            filters_compression = [{'id': py7zr.FILTER_COPY}]
+        else:
+            filters_compression = [{'id': py7zr.FILTER_LZMA2, 'preset': presets.get(compression_level, 3)}]
         pwd = password if (password and password.strip()) else None
 
         vol = volume_size.strip().lower() if volume_size else "0"
         use_volumes = vol not in ("0", "")
 
-        if use_volumes:
-            archive_obj = py7zr.SevenZipFile(target, 'w', filters=filters_compression, password=pwd, volume=vol)
-            archive_name = f"Backup_{backup_type}_{timestamp}"
-        else:
-            archive_obj = py7zr.SevenZipFile(full_dest_path, 'w', filters=filters_compression, password=pwd)
+        original_cpu_count = os.cpu_count
+        if threads > 1:
+            os.cpu_count = lambda: threads
 
-        with archive_obj as archive:
-            if pwd and not use_volumes: archive.header_encryption = True
-            
-            if incremental and files_to_backup:
-                total = len(files_to_backup)
-                for i, file_info in enumerate(files_to_backup):
-                    backup_pause_event.wait() 
-                    if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado.")
-                    if os.path.abspath(file_info["path"]) == os.path.abspath(full_dest_path): continue
-                    if os.path.islink(file_info["path"]) or not os.path.isfile(file_info["path"]): continue
-
-                    try:
-                        if progress_callback: progress_callback(int(((i + 1) / total) * 100))
-                        if ui_log_callback: ui_log_callback(f"Comprimindo: {file_info['rel_path']}")
-                        archive.write(file_info["path"], file_info["rel_path"])
-                        files_processed += 1
-                    except Exception as fe: continue
+        try:
+            if use_volumes:
+                archive_obj = py7zr.SevenZipFile(target, 'w', filters=filters_compression, password=pwd, volume=vol, mp=(threads>1))
+                archive_name = f"Backup_{backup_type}_{timestamp}"
             else:
-                for origin in origins:
-                    folder_name = os.path.basename(origin)
-                    for root, dirs, files in os.walk(origin):
+                archive_obj = py7zr.SevenZipFile(full_dest_path, 'w', filters=filters_compression, password=pwd, mp=(threads>1))
+    
+            with archive_obj as archive:
+                if pwd and not use_volumes: archive.header_encryption = True
+            
+                if incremental and files_to_backup:
+                    total = len(files_to_backup)
+                    for i, file_info in enumerate(files_to_backup):
                         backup_pause_event.wait() 
                         if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado.")
-                        dirs[:] = [d for d in dirs if not d.startswith('.') and d.lower() not in folder_ignore]
+                        if os.path.abspath(file_info["path"]) == os.path.abspath(full_dest_path): continue
+                        if os.path.islink(file_info["path"]) or not os.path.isfile(file_info["path"]): continue
+
+                        try:
+                            if progress_callback: progress_callback(int(((i + 1) / total) * 100))
+                            if ui_log_callback: ui_log_callback(f"Comprimindo: {file_info['rel_path']}")
+                            archive.write(file_info["path"], file_info["rel_path"])
+                            files_processed += 1
+                        except Exception as fe:
+                            if ui_log_callback: ui_log_callback(f"Erro (incremental) em {file_info['rel_path']}: {fe}")
+                            continue
+                else:
+                    for origin in origins:
+                        if os.path.isfile(origin):
+                            backup_pause_event.wait() 
+                            if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado.")
                         
-                        for file in files:
-                            backup_pause_event.wait()
-                            if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado pelo usuário.")
-                            if file.startswith('.'): continue
-                            
-                            src_file = os.path.join(root, file)
+                            src_file = origin
+                            file = os.path.basename(origin)
                             if not passes_advanced_filters(src_file, filters): continue
                             if is_excluded(file, exclude_list): continue 
                             if os.path.abspath(src_file) == os.path.abspath(full_dest_path): continue
                             if os.path.islink(src_file) or not os.path.isfile(src_file): continue
 
                             try:
-                                if ui_log_callback: ui_log_callback(f"Comprimindo: {os.path.relpath(src_file, origin)}")
-                                archive.write(src_file, os.path.join(folder_name, os.path.relpath(src_file, origin)))
+                                if ui_log_callback: ui_log_callback(f"Comprimindo: {file}")
+                                archive.write(src_file, file)
                                 files_processed += 1
-                            except Exception as fe: continue
+                            except Exception as fe:
+                                if ui_log_callback: ui_log_callback(f"Erro (single) em {file}: {fe}")
+                                continue
+                            continue
+                        
+                        folder_name = os.path.basename(origin)
+                        for root, dirs, files in os.walk(origin):
+                            backup_pause_event.wait() 
+                            if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado.")
+                            dirs[:] = [d for d in dirs if not d.startswith('.') and d.lower() not in folder_ignore]
+                        
+                            for file in files:
+                                backup_pause_event.wait()
+                                if backup_abort_event.is_set(): raise BackupCancelledException("Backup abortado pelo usuário.")
+                                if file.startswith('.'): continue
                             
+                                src_file = os.path.join(root, file)
+                                if not passes_advanced_filters(src_file, filters): continue
+                                if is_excluded(file, exclude_list): continue 
+                                if os.path.abspath(src_file) == os.path.abspath(full_dest_path): continue
+                                if os.path.islink(src_file) or not os.path.isfile(src_file): continue
+
+                                try:
+                                    if ui_log_callback: ui_log_callback(f"Comprimindo: {os.path.relpath(src_file, origin)}")
+                                    archive.write(src_file, os.path.join(folder_name, os.path.relpath(src_file, origin)))
+                                    files_processed += 1
+                                except Exception as fe:
+                                    if ui_log_callback: ui_log_callback(f"Erro (folder) em {file}: {fe}")
+                                    continue
+                            
+        finally:
+            if threads > 1:
+                os.cpu_count = original_cpu_count
+                            
+        if files_processed == 0:
+            if os.path.exists(full_dest_path):
+                os.remove(full_dest_path)
+            monitor_running[0] = False
+            return "Nenhum arquivo válido ou modificado foi encontrado para backup.", True, {}
+            
         integrity_ok, integrity_msg = verify_backup_integrity(full_dest_path, pwd)
         if not integrity_ok:
             if os.path.exists(full_dest_path): os.remove(full_dest_path)
@@ -573,12 +642,19 @@ def start_scheduler(config):
     schedule.clear()
     
     def job():
+        threads_val = 1
+        try:
+            m = re.search(r'\d+', str(config.get("threads", "1")))
+            if m: threads_val = int(m.group())
+        except: pass
+        
         start_backup_process(
             origins=config.get("origin", []), target=config.get("destination", ""),
             compression_level=config.get("compression", "Normal"), password=config.get("password"),
             retention=config.get("retention", 5), incremental=config.get("incremental", False),
             filters=config.get("filters", {}), folder_exclusions=config.get("folder_exclusions", []),
             exclusions=config.get("exclusions", ""), volume_size=config.get("volume_size", "0"),
+            threads=threads_val,
             ui_log_callback=lambda msg: logger.info(f"[Scheduler] {msg}")
         )
 
@@ -624,3 +700,132 @@ def get_dashboard_data():
         "total_files": sum(h.get("files", 0) for h in history),
         "recent_backups": history[-10:] if history else []
     }
+
+# ==================== REMOÇÃO DE DUPLICATAS ====================
+def _get_chunk_hash(filepath, chunk_size=4096):
+    try:
+        hasher = hashlib.md5()
+        with open(filepath, 'rb') as f:
+            chunk = f.read(chunk_size)
+            if not chunk: return None
+            hasher.update(chunk)
+        return hasher.hexdigest()
+    except OSError: return None
+
+def _get_full_hash(filepath):
+    return get_file_hash(filepath)
+
+def _compare_byte_by_byte(file1, file2, chunk_size=65536):
+    try:
+        with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+            while True:
+                b1 = f1.read(chunk_size)
+                b2 = f2.read(chunk_size)
+                if b1 != b2: return False
+                if not b1: return True
+    except OSError: return False
+
+def scan_duplicates(directory, progress_cb=None, log_cb=None, abort_event=None):
+    if not os.path.isdir(directory):
+        return []
+
+    if log_cb: log_cb(f"Iniciando escaneamento no diretório: {directory}")
+    
+    # Camada 1: Tamanho
+    size_dict = defaultdict(list)
+    if log_cb: log_cb("Etapa 1: Agrupando arquivos por tamanho...")
+    
+    for root, dirs, files in os.walk(directory):
+        if abort_event and abort_event.is_set(): return []
+        for file in files:
+            filepath = os.path.join(root, file)
+            if os.path.islink(filepath): continue
+            try:
+                size = os.path.getsize(filepath)
+                if size > 0: # Ignorar arquivos vazios
+                    size_dict[size].append(filepath)
+            except OSError: pass
+
+    # Filtrar tamanhos únicos
+    potential_dupes = [paths for paths in size_dict.values() if len(paths) > 1]
+    
+    if not potential_dupes:
+        if log_cb: log_cb("Nenhum arquivo duplicado encontrado.")
+        if progress_cb: progress_cb(100)
+        return []
+
+    # Camada 2: Hash Parcial (4KB)
+    partial_dict = defaultdict(list)
+    if log_cb: log_cb(f"Etapa 2: Comparando assinaturas parciais (MD5 4KB) de {sum(len(p) for p in potential_dupes)} arquivos...")
+    
+    total_groups = len(potential_dupes)
+    for i, paths in enumerate(potential_dupes):
+        if abort_event and abort_event.is_set(): return []
+        for path in paths:
+            phash = _get_chunk_hash(path)
+            if phash: partial_dict[(os.path.getsize(path), phash)].append(path)
+        if progress_cb: progress_cb(int(((i+1)/total_groups)*30))
+
+    potential_dupes_2 = [paths for paths in partial_dict.values() if len(paths) > 1]
+
+    if not potential_dupes_2:
+        if log_cb: log_cb("Nenhum arquivo duplicado encontrado.")
+        if progress_cb: progress_cb(100)
+        return []
+
+    # Camada 3: Hash Total
+    full_dict = defaultdict(list)
+    if log_cb: log_cb(f"Etapa 3: Comparando assinaturas completas de {sum(len(p) for p in potential_dupes_2)} arquivos...")
+    
+    total_groups = len(potential_dupes_2)
+    for i, paths in enumerate(potential_dupes_2):
+        if abort_event and abort_event.is_set(): return []
+        for path in paths:
+            fhash = _get_full_hash(path)
+            if fhash: full_dict[(os.path.getsize(path), fhash)].append(path)
+        if progress_cb: progress_cb(30 + int(((i+1)/total_groups)*40))
+
+    potential_dupes_3 = [paths for paths in full_dict.values() if len(paths) > 1]
+
+    if not potential_dupes_3:
+        if log_cb: log_cb("Nenhum arquivo duplicado encontrado.")
+        if progress_cb: progress_cb(100)
+        return []
+
+    # Camada 4: Byte a Byte
+    if log_cb: log_cb("Etapa 4: Confirmação byte-a-byte para eliminar falsos positivos...")
+    final_dupes = []
+    
+    total_groups = len(potential_dupes_3)
+    for i, paths in enumerate(potential_dupes_3):
+        if abort_event and abort_event.is_set(): return []
+        byte_groups = []
+        for path in paths:
+            added = False
+            for bgroup in byte_groups:
+                if _compare_byte_by_byte(bgroup[0], path):
+                    bgroup.append(path)
+                    added = True
+                    break
+            if not added:
+                byte_groups.append([path])
+                
+        for bgroup in byte_groups:
+            if len(bgroup) > 1:
+                final_dupes.append(bgroup)
+        if progress_cb: progress_cb(70 + int(((i+1)/total_groups)*30))
+
+    if log_cb: log_cb(f"Escaneamento concluído! Encontrados {len(final_dupes)} grupos de duplicatas.")
+    if progress_cb: progress_cb(100)
+    return final_dupes
+
+def delete_duplicate_files(file_paths, log_cb=None):
+    success_count = 0
+    for path in file_paths:
+        try:
+            os.remove(path)
+            if log_cb: log_cb(f"Removido com sucesso: {path}")
+            success_count += 1
+        except OSError as e:
+            if log_cb: log_cb(f"Erro ao remover {path}: {e}")
+    return success_count

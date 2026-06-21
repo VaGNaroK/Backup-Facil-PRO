@@ -3,7 +3,7 @@ import os
 from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
-from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre
+from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados
 
 # 🧭 GPS PARA IMAGENS
 def get_asset_path(filename):
@@ -60,6 +60,9 @@ QPushButton:pressed { background-color: #007acc; }
 QCheckBox { color: #e0e0e0; font-weight: bold; }
 QCheckBox::indicator { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #3f3f46; background-color: #2d2d30; }
 QCheckBox::indicator:checked { background-color: #27ae60; border: 1px solid #27ae60; }
+QTreeView::indicator { width: 14px; height: 14px; border-radius: 7px; border: 1px solid #95a5a6; background-color: #2d2d30; }
+QTreeView::indicator:checked { background-color: #27ae60; border: 1px solid #27ae60; }
+QTreeView::indicator:unchecked:hover { border: 1px solid #007acc; }
 """
 
 class JanelaPrincipal(QMainWindow):
@@ -68,6 +71,7 @@ class JanelaPrincipal(QMainWindow):
         self.setWindowTitle("Backup Fácil Professional")
         
         # ✅ APLICANDO O SEU ÍCONE!
+        # TODO: Migrar a utilização do icon.png para icon.svg no futuro para melhor escalonamento vetorial.
         caminho_icone = get_asset_path("icon.png")
         if os.path.exists(caminho_icone):
             self.setWindowIcon(QIcon(caminho_icone))
@@ -86,6 +90,7 @@ class JanelaPrincipal(QMainWindow):
         self.aba_dashboard = AbaDashboard()
         self.aba_logs = AbaLogs()
         self.aba_agendamento = AbaAgendamento()
+        self.aba_duplicados = AbaDuplicados()
         self.aba_sobre = AbaSobre()
 
         # ✅ CONEXÃO MÁGICA: Ligando o sinal de logs da Aba Backup para a Aba Logs
@@ -98,6 +103,7 @@ class JanelaPrincipal(QMainWindow):
         self.tabs.addTab(self.aba_dashboard, "📈 Dashboard")
         self.tabs.addTab(self.aba_logs, "📝 Logs")
         self.tabs.addTab(self.aba_agendamento, "📅 Agendamento")
+        self.tabs.addTab(self.aba_duplicados, "🗑️ Remover Duplicados")
         self.tabs.addTab(self.aba_sobre, "ℹ️ Sobre")
 
         layout_principal.addWidget(self.tabs)
@@ -107,6 +113,7 @@ if __name__ == "__main__":
     app.setStyleSheet(ESTILO_DARK)
     
     # Adiciona o ícone também na barra de tarefas do sistema operacional
+    # TODO: Atualizar uso do icon.png para icon.svg no futuro para melhor escalonamento.
     caminho_icone = get_asset_path("icon.png")
     if os.path.exists(caminho_icone):
         app.setWindowIcon(QIcon(caminho_icone))

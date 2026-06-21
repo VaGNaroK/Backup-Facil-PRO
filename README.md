@@ -48,6 +48,17 @@ BACKUP_FACIL/
 
 ## 🚀 Como Executar em Modo de Desenvolvimento
 
+**⚠️ Pré-requisitos do Sistema (Linux):**
+Caso você utilize Linux (Debian/Ubuntu/Mint) e se depare com o erro `Could not load the Qt platform plugin "xcb"`, você precisará instalar a biblioteca base do cursor do Qt antes de executar o projeto:
+```bash
+sudo apt install libxcb-cursor0
+```
+
+Além disso, para compilar a biblioteca de notificações (DBUS) no seu ambiente Python, instale os pacotes de desenvolvimento do sistema:
+```bash
+sudo apt install libdbus-1-dev libglib2.0-dev python3-dev
+```
+
 1. Clone o repositório:
    ```bash
    git clone [https://github.com/VaGNaroK/backup-facil.git](https://github.com/VaGNaroK/backup-facil.git)

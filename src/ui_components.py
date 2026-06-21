@@ -1,10 +1,12 @@
 import os
+import multiprocessing
+import re
 import traceback
 from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QLineEdit, QPushButton, 
                                QListWidget, QProgressBar, QFileDialog, QFrame, QMessageBox,
-                               QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, 
+                               QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QTreeWidgetItem, QTreeWidget, 
                                QCheckBox, QTextEdit)
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QTextCursor
@@ -21,7 +23,7 @@ class TrabalhadorBackup(QThread):
     velocidade = Signal(str)  # ✅ NOVO SINAL: Monitor Cardíaco
 
     def __init__(self, origens, destino, compressao, senha, incremental, exclusoes,
-                 retention=5, volume_size="0", folder_exclusions=None):
+                 retention=5, volume_size="0", folder_exclusions=None, threads=1):
         super().__init__()
         self.origens = origens
         self.destino = destino
@@ -32,6 +34,7 @@ class TrabalhadorBackup(QThread):
         self.retention = retention
         self.volume_size = volume_size
         self.folder_exclusions = folder_exclusions if folder_exclusions else []
+        self.threads = threads
 
     def run(self):
         try:
@@ -45,6 +48,7 @@ class TrabalhadorBackup(QThread):
                 retention=self.retention,
                 volume_size=self.volume_size,
                 folder_exclusions=self.folder_exclusions,
+                threads=self.threads,
                 progress_callback=self.progresso.emit,
                 ui_log_callback=self.log_emitido.emit,
                 speed_callback=self.velocidade.emit  # ✅ ENVIANDO A VELOCIDADE PARA A TELA
@@ -134,6 +138,11 @@ class AbaBackup(QWidget):
         self.btn_add_origem = QPushButton("➕ Adicionar Pasta")
         self.btn_add_origem.setCursor(Qt.PointingHandCursor)
         self.btn_add_origem.clicked.connect(self.adicionar_origem)
+        
+        self.btn_add_arquivo = QPushButton("📄 Adicionar Arquivo(s)")
+        self.btn_add_arquivo.setCursor(Qt.PointingHandCursor)
+        self.btn_add_arquivo.clicked.connect(self.adicionar_arquivo)
+        
         self.lista_pastas = QListWidget()
         self.lista_pastas.setSelectionMode(QListWidget.ExtendedSelection)
         self.btn_remover_origem = QPushButton("🗑️ Remover Selecionada")
@@ -141,9 +150,16 @@ class AbaBackup(QWidget):
         self.btn_remover_origem.setStyleSheet("background-color: #c0392b; color: white;")
         self.btn_remover_origem.clicked.connect(self.remover_origem)
         
+        self.btn_limpar_origem = QPushButton("🧹 Limpar Lista")
+        self.btn_limpar_origem.setCursor(Qt.PointingHandCursor)
+        self.btn_limpar_origem.setStyleSheet("background-color: #e74c3c; color: white;")
+        self.btn_limpar_origem.clicked.connect(self.limpar_origens)
+        
         layout_botoes_origem = QHBoxLayout()
         layout_botoes_origem.addWidget(self.btn_add_origem)
+        layout_botoes_origem.addWidget(self.btn_add_arquivo)
         layout_botoes_origem.addWidget(self.btn_remover_origem)
+        layout_botoes_origem.addWidget(self.btn_limpar_origem)
         layout_botoes_origem.addStretch() 
 
         # Opções Avançadas (Regex e Incremental)
@@ -164,9 +180,19 @@ class AbaBackup(QWidget):
         self.chk_incremental = QCheckBox("Ativar Backup Incremental")
         self.chk_incremental.setCursor(Qt.PointingHandCursor)
         
+        lbl_threads = QLabel("Threads (Compressão):")
+        self.combo_threads = QComboBox()
+        max_t = multiprocessing.cpu_count()
+        opts = sorted(list(set([1, 2, int(max_t/2) if max_t > 2 else 2, max_t])))
+        self.combo_threads.addItems([str(t) for t in opts if t < max_t] + [f"Todos ({max_t})"])
+        self.combo_threads.setCursor(Qt.PointingHandCursor)
+        
         layout_col1.addWidget(lbl_compressao)
         layout_col1.addWidget(self.combo_compressao)
         layout_col1.addWidget(self.chk_incremental)
+        layout_col1.addWidget(lbl_threads)
+        layout_col1.addWidget(self.combo_threads)
+        layout_col1.addStretch()
 
         layout_col2 = QVBoxLayout()
         layout_col2.setSpacing(5)
@@ -276,24 +302,32 @@ class AbaBackup(QWidget):
             if pasta not in [self.lista_pastas.item(i).text() for i in range(self.lista_pastas.count())]:
                 self.lista_pastas.addItem(pasta)
 
+    def adicionar_arquivo(self):
+        arquivos, _ = QFileDialog.getOpenFileNames(self, "Adicionar Arquivos")
+        if arquivos:
+            for arquivo in arquivos:
+                if arquivo not in [self.lista_pastas.item(i).text() for i in range(self.lista_pastas.count())]:
+                    self.lista_pastas.addItem(arquivo)
+
     def remover_origem(self):
         for item in self.lista_pastas.selectedItems():
             self.lista_pastas.takeItem(self.lista_pastas.row(item))
+
+    def limpar_origens(self):
+        self.lista_pastas.clear()
 
     def carregar_config_salvo(self):
         config = logic.load_config()
         if not config: return
         if config.get("destination"):
             self.campo_destino.setText(config["destination"])
-        if config.get("origin"):
-            origins = config["origin"] if isinstance(config["origin"], list) else [config["origin"]]
-            for org in origins:
-                if org and org not in [self.lista_pastas.item(i).text() for i in range(self.lista_pastas.count())]:
-                    self.lista_pastas.addItem(org)
+        # ORIGENS REMOVIDAS DA INICIALIZAÇÃO PARA PRIVACIDADE
         if config.get("compression"):
             self.combo_compressao.setCurrentText(config["compression"])
         if config.get("incremental"):
             self.chk_incremental.setChecked(config["incremental"])
+        if config.get("threads"):
+            self.combo_threads.setCurrentText(config["threads"])
         if config.get("exclusions"):
             self.campo_regex.setText(config["exclusions"])
         if config.get("volume_size"):
@@ -321,6 +355,7 @@ class AbaBackup(QWidget):
             "destination": self.campo_destino.text().strip(),
             "compression": self.combo_compressao.currentText(),
             "incremental": self.chk_incremental.isChecked(),
+            "threads": self.combo_threads.currentText(),
             "exclusions": self.campo_regex.text().strip(),
             "volume_size": self.campo_volume.text().strip(),
             "retention": retention_val,
@@ -363,6 +398,10 @@ class AbaBackup(QWidget):
         exclusoes = self.campo_regex.text()
         volume_size = self.campo_volume.text().strip()
         folder_exclusions = [f.strip() for f in self.campo_folder_exc.text().split(',') if f.strip()]
+        
+        threads_text = self.combo_threads.currentText()
+        match = re.search(r'\d+', threads_text)
+        threads_num = int(match.group()) if match else 1
 
         try:
             retention_val = int(self.campo_retention.text().strip() or "5")
@@ -402,7 +441,8 @@ class AbaBackup(QWidget):
 
         self.worker = TrabalhadorBackup(
             origens, destino, nivel_compressao, senha_digitada, incremental_ativo, exclusoes,
-            retention=retention_val, volume_size=volume_size, folder_exclusions=folder_exclusions
+            retention=retention_val, volume_size=volume_size, folder_exclusions=folder_exclusions,
+            threads=threads_num
         )
         self.worker.sucesso.connect(self.backup_concluido)
         self.worker.erro.connect(self.backup_falhou)
@@ -847,6 +887,8 @@ class AbaSobre(QWidget):
         descricao = QLabel(
             "Ferramenta de desktop robusta e multiplataforma para automação, "
             "gestão e criptografia de backups locais.\n\n"
+            "• Busca e remoção de arquivos duplicados com algoritmo em 4 camadas\n"
+            "• Otimização de compressão Multi-Threading no py7zr\n"
             "• Backups completos e incrementais com motor SQLite/MD5\n"
             "• Criptografia AES-256 via compressão .7z\n"
             "• Filtros avançados por extensão e Expressões Regulares\n"
@@ -1004,3 +1046,182 @@ class AbaDashboard(QWidget):
                 self.recalcular_cards_da_tabela()
         except Exception as e:
             pass
+
+# ==================== TRABALHADOR DE DUPLICATAS ====================
+class TrabalhadorDuplicados(QThread):
+    progresso = Signal(int)
+    log_emitido = Signal(str)
+    resultados = Signal(list)
+    erro = Signal(str)
+
+    def __init__(self, diretorio):
+        super().__init__()
+        self.diretorio = diretorio
+        self.abort_event = logic.threading.Event()
+
+    def run(self):
+        try:
+            self.log_emitido.emit(f"Preparando scan em: {self.diretorio}")
+            def cb_progresso(v): self.progresso.emit(v)
+            def cb_log(msg): self.log_emitido.emit(msg)
+            res = logic.scan_duplicates(self.diretorio, cb_progresso, cb_log, self.abort_event)
+            if not self.abort_event.is_set():
+                self.resultados.emit(res)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            self.erro.emit(f"Erro durante scan: {e}")
+
+    def abort(self):
+        self.abort_event.set()
+
+
+# ==================== ABA DUPLICADOS ====================
+class AbaDuplicados(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+
+        # Cabeçalho
+        titulo = QLabel("🧹 Remover Arquivos Duplicados")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Nesta aba você pode buscar por arquivos duplicados para poder apagá-los e liberar espaço.\nO scan utiliza um sistema de 4 camadas para garantir 100% de segurança (Tamanho > Hash Parcial > Hash Total > Byte a Byte).")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+
+        layout.addWidget(titulo)
+        layout.addWidget(desc)
+
+        # Seleção de Diretório
+        h_dir = QHBoxLayout()
+        self.entrada_dir = QLineEdit()
+        self.entrada_dir.setPlaceholderText("Escolha a pasta para escanear...")
+        btn_dir = QPushButton("Procurar...")
+        btn_dir.clicked.connect(self.escolher_diretorio)
+        h_dir.addWidget(self.entrada_dir)
+        h_dir.addWidget(btn_dir)
+        layout.addLayout(h_dir)
+
+        # Controles e Scan
+        self.btn_scan = QPushButton("🔍 Iniciar Escaneamento")
+        self.btn_scan.setStyleSheet("background-color: #27ae60; font-weight: bold; padding: 10px;")
+        self.btn_scan.clicked.connect(self.iniciar_scan)
+        layout.addWidget(self.btn_scan)
+
+        # Progresso
+        self.progresso = QProgressBar()
+        self.progresso.setValue(0)
+        self.progresso.setTextVisible(True)
+        layout.addWidget(self.progresso)
+
+        # Log
+        self.area_log = QTextEdit()
+        self.area_log.setReadOnly(True)
+        self.area_log.setMaximumHeight(100)
+        self.area_log.setStyleSheet("background-color: #1e1e1e; font-family: monospace; font-size: 11px;")
+        layout.addWidget(self.area_log)
+
+        # Resultados (TreeWidget)
+        self.tree_resultados = QTreeWidget()
+        self.tree_resultados.setHeaderLabels(["Arquivos Duplicados", "Tamanho"])
+        self.tree_resultados.header().setSectionResizeMode(0, QHeaderView.Interactive)
+        self.tree_resultados.header().setSectionResizeMode(1, QHeaderView.Interactive)
+        self.tree_resultados.setColumnWidth(0, 500)
+        layout.addWidget(self.tree_resultados)
+
+        # Ações
+        h_acoes = QHBoxLayout()
+        self.btn_remover = QPushButton("🗑️ Remover Selecionados")
+        self.btn_remover.setStyleSheet("background-color: #c0392b; font-weight: bold;")
+        self.btn_remover.clicked.connect(self.remover_selecionados)
+        self.btn_remover.setEnabled(False)
+
+        btn_limpar = QPushButton("Limpar Árvore")
+        btn_limpar.clicked.connect(self.tree_resultados.clear)
+
+        h_acoes.addWidget(btn_limpar)
+        h_acoes.addWidget(self.btn_remover)
+        layout.addLayout(h_acoes)
+
+        self.setLayout(layout)
+        self.trabalhador = None
+        self.grupos_duplicados = []
+
+    def log(self, msg):
+        self.area_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+        self.area_log.moveCursor(QTextCursor.End)
+
+    def escolher_diretorio(self):
+        pasta = QFileDialog.getExistingDirectory(self, "Selecionar Diretório")
+        if pasta: self.entrada_dir.setText(pasta)
+
+    def iniciar_scan(self):
+        diretorio = self.entrada_dir.text().strip()
+        if not diretorio or not os.path.exists(diretorio):
+            QMessageBox.warning(self, "Aviso", "Por favor, selecione um diretório válido.")
+            return
+
+        self.tree_resultados.clear()
+        self.progresso.setValue(0)
+        self.btn_scan.setEnabled(False)
+        self.btn_remover.setEnabled(False)
+        self.area_log.clear()
+
+        self.trabalhador = TrabalhadorDuplicados(diretorio)
+        self.trabalhador.progresso.connect(self.progresso.setValue)
+        self.trabalhador.log_emitido.connect(self.log)
+        self.trabalhador.resultados.connect(self.exibir_resultados)
+        self.trabalhador.erro.connect(self.erro_scan)
+        self.trabalhador.start()
+
+    def erro_scan(self, msg):
+        self.log(f"ERRO: {msg}")
+        self.btn_scan.setEnabled(True)
+
+    def exibir_resultados(self, resultados):
+        self.grupos_duplicados = resultados
+        if not resultados:
+            self.log("Scan finalizado. Nenhum arquivo duplicado foi encontrado.")
+            QMessageBox.information(self, "Sucesso", "Nenhum arquivo duplicado foi encontrado.")
+            self.btn_scan.setEnabled(True)
+            return
+
+        for idx, grupo in enumerate(resultados):
+            tamanho = logic.os.path.getsize(grupo[0])
+            tamanho_formatado = f"{tamanho / (1024*1024):.2f} MB"
+            
+            root_item = QTreeWidgetItem(self.tree_resultados, [f"Grupo {idx+1} ({len(grupo)} arquivos idênticos)", tamanho_formatado])
+            root_item.setExpanded(True)
+            
+            # Deixar todos desmarcados por padrão, como o usuário pediu
+            for path in grupo:
+                child = QTreeWidgetItem(root_item, [path, ""])
+                child.setFlags(child.flags() | Qt.ItemIsUserCheckable)
+                child.setCheckState(0, Qt.Unchecked)
+
+        self.btn_remover.setEnabled(True)
+        self.btn_scan.setEnabled(True)
+        self.log(f"Encontrados {len(resultados)} grupos de arquivos idênticos.")
+
+    def remover_selecionados(self):
+        arquivos_para_remover = []
+        for i in range(self.tree_resultados.topLevelItemCount()):
+            grupo = self.tree_resultados.topLevelItem(i)
+            for j in range(grupo.childCount()):
+                child = grupo.child(j)
+                if child.checkState(0) == Qt.Checked:
+                    arquivos_para_remover.append(child.text(0))
+
+        if not arquivos_para_remover:
+            QMessageBox.warning(self, "Aviso", "Nenhum arquivo foi selecionado para exclusão.")
+            return
+
+        resp = QMessageBox.question(self, "Confirmação", f"Tem certeza que deseja excluir permanentemente {len(arquivos_para_remover)} arquivos?", QMessageBox.Yes | QMessageBox.No)
+        if resp == QMessageBox.Yes:
+            self.log(f"Iniciando exclusão de {len(arquivos_para_remover)} arquivos...")
+            sucessos = logic.delete_duplicate_files(arquivos_para_remover, self.log)
+            QMessageBox.information(self, "Concluído", f"Excluídos {sucessos} de {len(arquivos_para_remover)} arquivos selecionados.")
+            self.tree_resultados.clear()
+            self.btn_remover.setEnabled(False)
+            self.entrada_dir.setText("")
