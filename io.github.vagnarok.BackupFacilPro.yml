@@ -8,6 +8,7 @@ finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
+  - --socket=pulseaudio
   - --device=dri
   # Permissões Vitais do App
   - --filesystem=host             
@@ -38,7 +39,7 @@ modules:
       - chmod +x /app/bin/backup-facil-pro
       
       # Registrando Ícone e Menu Iniciar
-      - install -Dm644 assets/icon.png /app/share/icons/hicolor/256x256/apps/io.github.vagnarok.BackupFacilPro.png
+      - install -Dm644 assets/icons/icon.png /app/share/icons/hicolor/256x256/apps/io.github.vagnarok.BackupFacilPro.png
       - mkdir -p /app/share/applications
       - |
         cat <<EOF > /app/share/applications/io.github.vagnarok.BackupFacilPro.desktop
