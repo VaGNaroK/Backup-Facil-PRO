@@ -1,7 +1,10 @@
 import os
+import sys
 import multiprocessing
 import re
 import traceback
+from PySide6.QtMultimedia import QSoundEffect
+from PySide6.QtCore import QUrl
 from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QLineEdit, QPushButton, 
@@ -465,6 +468,22 @@ class AbaBackup(QWidget):
         msg_sucesso = resultado[0] if isinstance(resultado, tuple) else str(resultado)
         self.texto_status.setText("✅ Backup Finalizado!")
         self.novo_log.emit(f"✅ SUCESSO: {msg_sucesso}")
+        
+        # Toca o som de conclusão
+        try:
+            if getattr(sys, 'frozen', False):
+                base_dir = sys._MEIPASS
+            else:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            sound_path = os.path.join(base_dir, "assets", "sounds", "done.wav")
+            if os.path.exists(sound_path):
+                self.som_ok = QSoundEffect()
+                self.som_ok.setSource(QUrl.fromLocalFile(sound_path))
+                self.som_ok.setVolume(1.0)
+                self.som_ok.play()
+        except Exception as e:
+            print(f"Erro ao tocar som: {e}")
+
         QMessageBox.information(self, "Sucesso", msg_sucesso)
 
     def backup_falhou(self, erro_msg):
@@ -588,6 +607,15 @@ class AbaRestauracao(QWidget):
         layout_principal = QVBoxLayout(self)
         layout_principal.setSpacing(15)
         layout_principal.setContentsMargins(20, 20, 20, 20)
+
+        # Cabeçalho
+        titulo = QLabel("🕒 Restauração de Dados")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Recupere seus arquivos criptografados e compactados em poucos cliques.\nBasta selecionar o pacote de backup desejado, a pasta de destino e inserir a senha (se aplicável).")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout_principal.addWidget(titulo)
+        layout_principal.addWidget(desc)
 
         titulo_arquivo = QLabel("1. Qual arquivo deseja restaurar? (.7z, .zip)")
         titulo_arquivo.setStyleSheet("font-weight: bold; font-size: 14px;")
