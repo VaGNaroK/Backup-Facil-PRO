@@ -500,6 +500,15 @@ class AbaAgendamento(QWidget):
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
 
+        # Cabeçalho
+        titulo = QLabel("📅 Agendamento de Backups")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Configure rotinas automáticas para realizar seus backups de forma independente.\nEscolha a frequência e o horário desejado, e deixe que o sistema faça o trabalho pesado por você no plano de fundo.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout.addWidget(titulo)
+        layout.addWidget(desc)
+
         self.combo_frequencia = QComboBox()
         self.combo_frequencia.addItems(["Diário", "Semanal", "A cada 4 horas", "A cada 12 horas"])
         self.combo_frequencia.setCursor(Qt.PointingHandCursor)
@@ -711,6 +720,15 @@ class AbaLogs(QWidget):
         layout.setSpacing(10)
         layout.setContentsMargins(20, 20, 20, 20)
 
+        # Cabeçalho
+        titulo = QLabel("📝 Console de Logs")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Acompanhe o registro detalhado de todas as operações realizadas.\nOs logs mostram sucessos, erros e avisos gerados durante as tarefas de backup e restauração.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout.addWidget(titulo)
+        layout.addWidget(desc)
+
         self.texto_log = QTextEdit()
         self.texto_log.setReadOnly(True)
         self.texto_log.setStyleSheet("QTextEdit { background-color: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #3f3f46; border-radius: 4px; }")
@@ -764,6 +782,15 @@ class AbaComparar(QWidget):
         layout_principal = QVBoxLayout(self)
         layout_principal.setSpacing(15)
         layout_principal.setContentsMargins(20, 20, 20, 20)
+
+        # Cabeçalho
+        titulo = QLabel("⚖️ Comparador de Backups")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Compare dois arquivos de backup diferentes para descobrir o que mudou entre eles.\nA ferramenta revelará quais arquivos foram adicionados, removidos ou mantidos, ideal para auditoria.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout_principal.addWidget(titulo)
+        layout_principal.addWidget(desc)
 
         # Seleção do Arquivo 1
         layout_arq1 = QHBoxLayout()
@@ -932,6 +959,15 @@ class AbaDashboard(QWidget):
         layout_principal = QVBoxLayout(self)
         layout_principal.setSpacing(20)
         layout_principal.setContentsMargins(20, 20, 20, 20)
+
+        # Cabeçalho
+        titulo = QLabel("📈 Dashboard Analítico")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
+        desc = QLabel("Tenha uma visão geral e analítica sobre a saúde dos seus dados salvos.\nAcompanhe o total de backups realizados, o volume de armazenamento consumido e o histórico de execuções recentes.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout_principal.addWidget(titulo)
+        layout_principal.addWidget(desc)
 
         layout_cards = QHBoxLayout()
         frame_total, self.lbl_total_backups = self.criar_card("Total de Backups", "0")
