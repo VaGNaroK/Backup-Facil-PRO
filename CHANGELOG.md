@@ -6,6 +6,7 @@ Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fác
 ### Adicionado
 - **Motor de Busca de Duplicatas (fdupes):** Nova aba contendo uma ferramenta profissional de busca de arquivos idênticos, utilizando um rigoroso algoritmo de 4 camadas (Tamanho -> MD5 4KB -> MD5 Total -> Byte-a-byte).
 - **Compressão Multi-Threading:** Adicionado seletor na UI para o usuário escolher o número de threads que o motor `.7z` vai usar (via `py7zr`), alavancando a velocidade de backup em computadores mais robustos.
+- **Cabeçalhos Descritivos (UX):** Adicionados títulos padronizados e textos explicativos intuitivos no topo de todas as abas secundárias (Restauração, Comparador, Agendamento, Logs e Dashboard) garantindo uma navegação e usabilidade muito mais premium.
 
 ### Corrigido
 - **Aviso sobre DBUS no Linux:** Omitida a mensagem chata do Plyer resolvendo a ausência da dependência silenciosa `dbus-python` no requirements do ambiente virtual.
