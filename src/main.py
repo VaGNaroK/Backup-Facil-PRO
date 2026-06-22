@@ -72,7 +72,7 @@ class JanelaPrincipal(QMainWindow):
         
         # ✅ APLICANDO O SEU ÍCONE!
         # TODO: Migrar a utilização do icon.png para icon.svg no futuro para melhor escalonamento vetorial.
-        caminho_icone = get_asset_path("icon.png")
+        caminho_icone = get_asset_path("icons/icon.png")
         if os.path.exists(caminho_icone):
             self.setWindowIcon(QIcon(caminho_icone))
             
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     
     # Adiciona o ícone também na barra de tarefas do sistema operacional
     # TODO: Atualizar uso do icon.png para icon.svg no futuro para melhor escalonamento.
-    caminho_icone = get_asset_path("icon.png")
+    caminho_icone = get_asset_path("icons/icon.png")
     if os.path.exists(caminho_icone):
         app.setWindowIcon(QIcon(caminho_icone))
         

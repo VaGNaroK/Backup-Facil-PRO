@@ -1,0 +1,3 @@
+- Nova funcionalidades
+- Novo tema escuro
+- Nova tela de exportação

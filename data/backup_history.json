@@ -1,22 +1,42 @@
 [
     {
-        "timestamp": "2026-04-09T20:55:20.929492",
-        "archive": "Backup_completo_2026-04-09_20-55-16.7z",
-        "path": "/home/vagnarok/Backup_completo_2026-04-09_20-55-16.7z",
-        "size": 12033830,
-        "files": 3,
+        "timestamp": "2026-06-21T20:07:46.610346",
+        "archive": "Backup_completo_2026-06-21_20-07-46.7z",
+        "path": "/home/vagnarok/Downloads/Backup_completo_2026-06-21_20-07-46.7z",
+        "size": 1826468,
+        "files": 14,
         "status": "success",
-        "duration": 4.636693954467773,
+        "duration": 0.561211109161377,
         "type": "completo"
     },
     {
-        "timestamp": "2026-04-09T20:56:47.648735",
-        "archive": "Backup_completo_2026-04-09_20-56-42.7z",
-        "path": "/home/vagnarok/Backup_completo_2026-04-09_20-56-42.7z",
-        "size": 14130399,
-        "files": 4,
+        "timestamp": "2026-06-21T20:42:41.392777",
+        "archive": "Backup_completo_2026-06-21_20-42-39.7z",
+        "path": "/home/vagnarok/Documentos/Backup_completo_2026-06-21_20-42-39.7z",
+        "size": 6133302,
+        "files": 1,
         "status": "success",
-        "duration": 5.276550054550171,
+        "duration": 1.610224962234497,
+        "type": "completo"
+    },
+    {
+        "timestamp": "2026-06-21T22:29:20.892459",
+        "archive": "Backup_completo_2026-06-21_22-29-18.7z",
+        "path": "/home/vagnarok/Downloads/Backup_completo_2026-06-21_22-29-18.7z",
+        "size": 7959775,
+        "files": 15,
+        "status": "success",
+        "duration": 2.159055233001709,
+        "type": "completo"
+    },
+    {
+        "timestamp": "2026-06-21T22:32:00.976575",
+        "archive": "Backup_completo_2026-06-21_22-31-58.7z",
+        "path": "/home/vagnarok/Downloads/Backup_completo_2026-06-21_22-31-58.7z",
+        "size": 7959775,
+        "files": 15,
+        "status": "success",
+        "duration": 2.1350364685058594,
         "type": "completo"
     }
 ]

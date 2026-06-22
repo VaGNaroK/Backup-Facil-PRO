@@ -1,10 +1,25 @@
 {
     "origin": [
-        "~/Imagens"
+        "~/Imagens/audiotab.png",
+        "~/Imagens/cuttab.png",
+        "~/Imagens/downloadfromweb.png",
+        "~/Imagens/filtertab.png",
+        "~/Imagens/imagetab.png",
+        "~/Imagens/logffmpegtab.png",
+        "~/Imagens/lyra icone2.7z",
+        "~/Imagens/main.png",
+        "~/Imagens/mascot.png",
+        "~/Imagens/mediainfotab.png",
+        "~/Imagens/moretab.png",
+        "~/Imagens/subtab.png",
+        "~/Imagens/synctab.png",
+        "~/Imagens/videotab.png",
+        "~/Músicas/Astronomia (Extended Mix) - Tony Igy.mp4"
     ],
-    "destination": "~",
-    "compression": "Normal",
+    "destination": "~/Downloads",
+    "compression": "Máximo",
     "incremental": false,
+    "threads": "8",
     "exclusions": "",
     "volume_size": "0",
     "retention": 5,

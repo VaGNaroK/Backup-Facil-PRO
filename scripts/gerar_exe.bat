@@ -9,7 +9,7 @@ if exist "dist" rmdir /s /q "dist"
 del /q *.spec 2>nul
 
 echo [2] Iniciando o PyInstaller (PySide6)...
-python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" --icon="assets\icon.ico" --add-data "assets;assets" --hidden-import logic --hidden-import ui_components src\main.py
+python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" --icon="assets\icons\icon.ico" --add-data "assets;assets" --hidden-import logic --hidden-import ui_components src\main.py
 
 echo [3] Limpeza final profunda...
 if exist "build" rmdir /s /q "build"

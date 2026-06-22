@@ -37,7 +37,7 @@ fi
 # 4. Compila o executável com PyInstaller
 echo -e "\n⏳ Compilando o binário a partir do código fonte..."
 python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" \
-    --icon="assets/icon.png" \
+    --icon="assets/icons/icon.png" \
     --add-data "assets:assets" \
     --hidden-import logic \
     --hidden-import ui_components \
@@ -61,7 +61,7 @@ mkdir -p $BUILD_DIR/usr/share/icons/hicolor/256x256/apps
 # 6. Copia os arquivos para a estrutura
 cp dist/Backup_Facil_Pro $BUILD_DIR/usr/bin/backup-facil-pro
 chmod +x $BUILD_DIR/usr/bin/backup-facil-pro
-cp assets/icon.png $BUILD_DIR/usr/share/icons/hicolor/256x256/apps/backup-facil-pro.png
+cp assets/icons/icon.png $BUILD_DIR/usr/share/icons/hicolor/256x256/apps/backup-facil-pro.png
 
 # 7. Cria o arquivo de atalho (.desktop) para o Menu Iniciar
 cat <<EOF > $BUILD_DIR/usr/share/applications/backup-facil-pro.desktop
