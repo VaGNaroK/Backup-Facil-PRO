@@ -61,8 +61,8 @@ sudo apt install libdbus-1-dev libglib2.0-dev python3-dev
 
 1. Clone o repositório:
    ```bash
-   git clone [https://github.com/VaGNaroK/backup-facil.git](https://github.com/VaGNaroK/backup-facil.git)
-   cd backup-facil
+   git clone https://github.com/VaGNaroK/Backup-Facil-PRO.git
+   cd Backup-Facil-PRO
    ```
 
 2. Configure o ambiente e instale as dependências:
