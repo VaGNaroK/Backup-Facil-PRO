@@ -15,6 +15,17 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications 
   - --talk-name=org.freedesktop.secrets       
 modules:
+  - name: mit-krb5
+    subdir: src
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+      - --enable-shared
+    sources:
+      - type: archive
+        url: https://kerberos.org/dist/krb5/1.21/krb5-1.21.3.tar.gz
+        sha256: b7a4cd5ead67fb08b980b21abd150ff7217e85ea320c9ed0c6dadd304840ad35
+
   - name: backup-facil-pro
     buildsystem: simple
     build-options:

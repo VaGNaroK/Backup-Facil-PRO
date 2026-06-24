@@ -39,7 +39,7 @@ BACKUP_FACIL/
 ├── assets/                 # Ícone (256x256) e recursos visuais
 ├── scripts/                # Scripts de compilação e empacotamento
 │   ├── gerar_deb.sh        # Script gerador do instalador Linux Mint/Debian
-│   ├── gerar_exe.bat       # Script gerador do executável Windows
+│   ├── gerar_exe.ps1       # Script gerador do executável Windows via PowerShell
 │   └── gerar_flatpak.sh    # Script automatizado para compilar e empacotar o Flatpak
 ├── io.github.vagnarok.BackupFacilPro.yml  # Manifesto Flatpak
 ├── requirements.txt        # Dependências do projeto
@@ -123,10 +123,22 @@ Para distribuições baseadas em Debian/Mint:
 
 ## 🪟 Como Compilar (Windows)
 
-1. No terminal do Windows, com o ambiente virtual ativo, execute:
-   ```cmd
-   python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" --icon="assets\icon.ico" --add-data "assets;assets" --hidden-import logic --hidden-import ui_components src\main.py
+1. Abra o PowerShell no diretório do projeto e crie o ambiente virtual:
+   ```powershell
+   python -m venv venv
    ```
+
+2. Ative o ambiente virtual e instale as dependências (pode ser necessário autorizar scripts no seu Windows):
+   ```powershell
+   .\venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
+
+3. Execute o script gerador automatizado:
+   ```powershell
+   .\scripts\gerar_exe.ps1
+   ```
+O executável final com a versão correspondente será gerado dentro da pasta `dist`!
 
 ---
 *Desenvolvido por VaGNaroK com um help de IA.*
