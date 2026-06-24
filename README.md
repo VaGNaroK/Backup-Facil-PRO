@@ -128,8 +128,9 @@ Para distribuições baseadas em Debian/Mint:
    python -m venv venv
    ```
 
-2. Ative o ambiente virtual e instale as dependências (pode ser necessário autorizar scripts no seu Windows):
+2. Libere a execução de scripts no seu terminal (necessário apenas nesta janela) e ative o ambiente virtual:
    ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
    .\venv\Scripts\Activate.ps1
    pip install -r requirements.txt
    ```
