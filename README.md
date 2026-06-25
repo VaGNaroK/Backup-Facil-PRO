@@ -13,7 +13,7 @@ Uma ferramenta de desktop robusta e multiplataforma para automação, gestão e 
 * **Suporte Oficial a Flatpak (NOVO):** Distribuição universal e segura via sandbox, garantindo que o app funcione em qualquer distribuição Linux.
 * **GPS de Diretórios Dinâmico:** Motor de lógica que detecta o ambiente de execução (Flatpak vs Nativo) e redireciona automaticamente o salvamento de dados para evitar erros de permissão.
 * **Criptografia Militar:** Suporte nativo a compressão `.7z` com criptografia **AES-256**.
-* **Backups Incrementais:** Motor inteligente usando SQLite e Hashes MD5 para copiar apenas os arquivos modificados ou novos.
+* **Backups Incrementais:** Motor inteligente usando SQLite e Hashes xxHash para copiar apenas os arquivos modificados ou novos.
 * **Filtros Avançados (Regex):** Capacidade de ignorar arquivos e pastas por extensões ou Expressões Regulares avançadas (ex: `^temp_.*`).
 * **Segurança de Credenciais:** Integração com o `keyring` do sistema operacional para armazenamento ofuscado de senhas.
 
@@ -37,6 +37,7 @@ BACKUP_FACIL/
 │   ├── logic.py            # Motor de backup e GPS de diretórios
 │   └── ui_components.py    # Interface e Monitor Cardíaco (MB/s)
 ├── assets/                 # Ícone (256x256) e recursos visuais
+│   └── sounds/             # Efeitos sonoros
 ├── scripts/                # Scripts de compilação e empacotamento
 │   ├── gerar_deb.sh        # Script gerador do instalador Linux Mint/Debian
 │   ├── gerar_exe.ps1       # Script gerador do executável Windows via PowerShell
@@ -93,16 +94,10 @@ flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flath
    chmod +x scripts/gerar_flatpak.sh
    ```
 
-2. **Gere o arquivo instalador:**
-   O script lerá automaticamente a versão do aplicativo direto no código fonte e compilará o pacote `.flatpak` na raiz do projeto.
+2. **Gere e instale o pacote automaticamente:**
+   O script lerá a versão direto do código fonte, compilará o pacote `.flatpak` na raiz do projeto e **já o instalará no seu sistema** ao final do processo, pronto para uso imediato!
    ```bash
    ./scripts/gerar_flatpak.sh
-   ```
-
-3. **Instale o pacote gerado:**
-   Você pode dar dois cliques no arquivo gerado através do seu gerenciador de janelas, ou usar o terminal:
-   ```bash
-   flatpak install --user ./Backup_Facil_Pro_v0.4.0.flatpak
    ```
 
 ## 📦 Como Compilar e Instalar (Linux - .deb)

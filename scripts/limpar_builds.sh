@@ -12,8 +12,9 @@ echo -e "${BLUE}    🧹 FAXINA DE COMPILAÇÃO E CACHE   🧹${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 # 1. Removendo pacotes de instalação finais na raiz
-echo -n "🗑️  Removendo arquivos .deb e .flatpak... "
-rm -f *.deb *.flatpak
+echo -n "🗑️  Removendo arquivos .deb, .flatpak e .AppImage... "
+# Mantém o appimagetool-*.AppImage para economizar banda, apaga só o gerado
+rm -f *.deb *.flatpak Backup_Facil_Pro*.AppImage
 echo -e "${GREEN}Concluído!${NC}"
 
 # 2. Removendo pastas de cache do Flatpak
@@ -21,9 +22,9 @@ echo -n "🗑️  Removendo diretórios do Flatpak-Builder (build-dir e .flatpak
 rm -rf build-dir .flatpak-builder
 echo -e "${GREEN}Concluído!${NC}"
 
-# 3. Removendo pastas temporárias do PyInstaller (.deb e .exe)
-echo -n "🗑️  Removendo diretórios do PyInstaller (build, dist e arquivos .spec)... "
-rm -rf build dist *.spec
+# 3. Removendo pastas temporárias do PyInstaller (.deb, .exe) e AppImage (AppDir)
+echo -n "🗑️  Removendo diretórios do PyInstaller e AppDir (build, dist, AppDir e .spec)... "
+rm -rf build dist AppDir *.spec
 echo -e "${GREEN}Concluído!${NC}"
 
 # 4. Removendo cache do Python (__pycache__)

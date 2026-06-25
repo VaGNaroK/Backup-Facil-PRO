@@ -41,6 +41,12 @@ def get_base_dir():
         os.makedirs(flatpak_data_dir, exist_ok=True)
         return flatpak_data_dir
 
+    # 1.5. Checagem VIP para AppImage (Sistema de arquivos interno é Somente Leitura)
+    if os.environ.get("APPIMAGE"):
+        appimage_config_dir = os.path.join(os.path.expanduser("~"), ".config", "backup_facil_pro")
+        os.makedirs(appimage_config_dir, exist_ok=True)
+        return appimage_config_dir
+
     # 2. Checagem para instaladores nativos (.deb ou Windows .exe)
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)

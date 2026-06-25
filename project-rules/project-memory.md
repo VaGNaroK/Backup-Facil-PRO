@@ -3,12 +3,12 @@
 ## Decisões Arquiteturais
 - Arquitetura separada em lógica (`logic.py`), interface gráfica (`ui_components.py`), e ponto de entrada (`main.py`).
 - Uso do `PySide6` (Qt) para a interface gráfica.
-- "GPS de Diretórios Dinâmico": lógica para detectar se roda em Flatpak ou Nativo e redirecionar salvamento de dados adequadamente.
+- "GPS de Diretórios Dinâmico": lógica para detectar se roda em Flatpak, AppImage (Sistema Somente Leitura) ou Nativo, redirecionando o salvamento de dados adequadamente para pastas seguras de usuário (`~/.var/app/` ou `~/.config/`).
 - Backups incrementais controlados via banco de dados SQLite e Hashes super-rápidos via `xxhash`.
 - Criptografia e compressão em formato `.7z` utilizando AES-256 (via `py7zr`).
 - Suporte a seleção de arquivos isolados para backup (além de diretórios completos). Arquivos isolados são armazenados diretamente na raiz do contêiner `.7z`.
 - Restauração Seletiva e Interativa: Leitura do conteúdo do `.7z` em memória e extração filtrada de alvos selecionados via checkbox pelo usuário.
-- Pipeline de empacotamento universal via `flatpak-builder`, e scripts para `.deb` e executável Windows.
+- Pipeline de empacotamento universal via `flatpak-builder`, e scripts para `.deb`, `.AppImage` portátil e executável Windows.
 
 ## Tecnologias Oficiais
 - Python 3.11+

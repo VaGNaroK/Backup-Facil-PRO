@@ -7,10 +7,16 @@ Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fác
 - **Restauração Seletiva:** A aba de Restauração foi completamente reformulada. Agora é possível listar o conteúdo de um arquivo `.7z` antes de extrair e utilizar caixas de seleção interativas para recuperar pastas ou arquivos específicos.
 - **Ferramentas de Seleção em Massa:** Adicionados botões "Marcar Todos", "Desmarcar Todos" na aba de Restauração, e um botão "Seleção Inteligente (Manter 1 de cada)" na aba de Remover Duplicados para facilitar limpezas em grande escala.
 - **Checkboxes Vetoriais (UI):** O estilo visual das caixas de seleção em listas e árvores foi atualizado para utilizar ícones SVG vetoriais (injetados dinamicamente), garantindo renderização perfeita no tema Dark do PySide6, sem esticamento ou bugs gráficos.
+- **Suporte a AppImage:** Adicionado script de automação oficial (`gerar_appimage.sh`) para construção de pacotes portáteis universais em formato `.AppImage` (empacotados sem dupla extração no modo `--onedir` para máxima performance de inicialização).
 
 ### Alterado
 - **Migração para xxHash:** O motor de integridade e checagem de arquivos substituiu o algoritmo MD5 pelo **xxHash** nativo em C (extremamente rápido e focado em performance não-criptográfica), aumentando violentamente a velocidade de busca de duplicatas e criação de backups.
 - **Buffer de Leitura de Disco:** O tamanho do bloco de leitura para arquivos grandes (`chunk_size`) subiu de 4KB para 8KB, tirando o máximo de proveito da velocidade extra de processamento do novo motor xxHash.
+- **Limpeza de Builds Inteligente:** O script `limpar_builds.sh` foi atualizado para gerenciar eficientemente as compilações do AppImage. Agora ele elimina sobras de compilação e versões antigas geradas, preservando automaticamente a ferramenta base (`appimagetool`) para economizar internet em builds futuros.
+
+### Corrigido
+- **Filesystem Read-Only do AppImage:** Eliminado um erro crítico de E/S (`OSError 30`) que impedia a abertura do app. O GPS de diretórios foi ensinado a desviar a gravação do banco de dados (da partição bloqueada do AppImage) diretamente para a pasta segura e persistente `~/.config/backup_facil_pro/`.
+- **Notificações Fantasmas (PyInstaller):** Resolvido o erro silencioso (`ModuleNotFoundError: No module named plyer.platforms`) que bloqueava as notificações de conclusão de backup em versões portáteis/compiladas (DEB e AppImage), forçando o carregamento do módulo nativo do Linux via importação oculta no script de build.
 
 ## [0.4.0] - 2026-06-21
 

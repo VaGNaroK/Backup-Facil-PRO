@@ -39,6 +39,7 @@ echo -e "\n⏳ Compilando o binário a partir do código fonte..."
 python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" \
     --icon="assets/icons/icon.png" \
     --add-data "assets:assets" \
+    --hidden-import=plyer.platforms.linux.notification \
     --paths "src" \
     src/main.py
 

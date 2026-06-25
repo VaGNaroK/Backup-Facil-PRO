@@ -10,3 +10,4 @@ dist/
 build-dir/
 *.flatpak
 python3-requirements.json
+*.AppImage
