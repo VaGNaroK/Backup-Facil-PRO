@@ -6,6 +6,7 @@ import schedule
 import time
 import threading
 import hashlib
+import xxhash
 import shutil
 import sqlite3
 import re
@@ -18,7 +19,7 @@ from plyer import notification
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.4.1"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
@@ -249,7 +250,7 @@ def init_incremental_db():
 
 def get_file_hash(filepath):
     try:
-        hasher = hashlib.md5()
+        hasher = xxhash.xxh64()
         with open(filepath, 'rb') as f:
             buf = f.read(65536)
             while len(buf) > 0:
@@ -625,10 +626,23 @@ def start_backup_process(origins, target, compression_level="Normal", password=N
         return f"Erro Crítico: {str(e)}", False, {}
 
 # ==================== RESTAURAÇÃO E AGENDADOR ====================
-def restore_backup_process(archive_path, extract_to, password=None, log_callback=None):
+def get_archive_files(archive_path, password=None):
     try:
         pwd = password if (password and password.strip()) else None
-        with py7zr.SevenZipFile(archive_path, mode='r', password=pwd) as z: z.extractall(path=extract_to)
+        with py7zr.SevenZipFile(archive_path, mode='r', password=pwd) as z:
+            return z.getnames(), None
+    except py7zr.exceptions.PasswordRequired: return None, "Senha necessária."
+    except py7zr.exceptions.CrcError: return None, "Falha de CRC (Senha incorreta ou corrompido)."
+    except Exception as e: return None, str(e)
+
+def restore_backup_process(archive_path, extract_to, password=None, log_callback=None, targets=None):
+    try:
+        pwd = password if (password and password.strip()) else None
+        with py7zr.SevenZipFile(archive_path, mode='r', password=pwd) as z:
+            if targets:
+                z.extract(targets=targets, path=extract_to)
+            else:
+                z.extractall(path=extract_to)
         return "Sucesso: Restauração concluída!", True
     except py7zr.exceptions.PasswordRequired: return "Erro: Senha incorreta ou não fornecida!", False
     except py7zr.exceptions.CrcError: return "Erro: Falha de CRC (Ficheiro corrompido ou senha incorreta).", False
@@ -702,9 +716,9 @@ def get_dashboard_data():
     }
 
 # ==================== REMOÇÃO DE DUPLICATAS ====================
-def _get_chunk_hash(filepath, chunk_size=4096):
+def _get_chunk_hash(filepath, chunk_size=8192):
     try:
-        hasher = hashlib.md5()
+        hasher = xxhash.xxh64()
         with open(filepath, 'rb') as f:
             chunk = f.read(chunk_size)
             if not chunk: return None
@@ -756,7 +770,7 @@ def scan_duplicates(directory, progress_cb=None, log_cb=None, abort_event=None):
 
     # Camada 2: Hash Parcial (4KB)
     partial_dict = defaultdict(list)
-    if log_cb: log_cb(f"Etapa 2: Comparando assinaturas parciais (MD5 4KB) de {sum(len(p) for p in potential_dupes)} arquivos...")
+    if log_cb: log_cb(f"Etapa 2: Comparando assinaturas parciais (xxHash 8KB) de {sum(len(p) for p in potential_dupes)} arquivos...")
     
     total_groups = len(potential_dupes)
     for i, paths in enumerate(potential_dupes):

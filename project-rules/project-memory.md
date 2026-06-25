@@ -4,9 +4,10 @@
 - Arquitetura separada em lógica (`logic.py`), interface gráfica (`ui_components.py`), e ponto de entrada (`main.py`).
 - Uso do `PySide6` (Qt) para a interface gráfica.
 - "GPS de Diretórios Dinâmico": lógica para detectar se roda em Flatpak ou Nativo e redirecionar salvamento de dados adequadamente.
-- Backups incrementais controlados via banco de dados SQLite e Hashes MD5.
+- Backups incrementais controlados via banco de dados SQLite e Hashes super-rápidos via `xxhash`.
 - Criptografia e compressão em formato `.7z` utilizando AES-256 (via `py7zr`).
 - Suporte a seleção de arquivos isolados para backup (além de diretórios completos). Arquivos isolados são armazenados diretamente na raiz do contêiner `.7z`.
+- Restauração Seletiva e Interativa: Leitura do conteúdo do `.7z` em memória e extração filtrada de alvos selecionados via checkbox pelo usuário.
 - Pipeline de empacotamento universal via `flatpak-builder`, e scripts para `.deb` e executável Windows.
 
 ## Tecnologias Oficiais
@@ -14,6 +15,7 @@
 - PySide6 (Interface Gráfica)
 - py7zr (Motor de compressão/criptografia)
 - SQLite3 (Integridade incremental)
+- xxhash (Hashing e integridade em alta velocidade)
 - Keyring (Segurança de credenciais)
 
 ## Regras Permanentes

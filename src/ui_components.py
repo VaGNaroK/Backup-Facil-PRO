@@ -7,10 +7,10 @@ from PySide6.QtMultimedia import QSoundEffect
 from PySide6.QtCore import QUrl
 from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
-                               QLabel, QLineEdit, QPushButton, 
-                               QListWidget, QProgressBar, QFileDialog, QFrame, QMessageBox,
+                               QLabel, QLineEdit, QPushButton, QApplication,
+                               QListWidget, QListWidgetItem, QProgressBar, QFileDialog, QFrame, QMessageBox,
                                QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QTreeWidgetItem, QTreeWidget, 
-                               QCheckBox, QTextEdit)
+                               QCheckBox, QTextEdit, QAbstractItemView)
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QTextCursor
 import logic
@@ -64,18 +64,20 @@ class TrabalhadorRestauracao(QThread):
     sucesso = Signal(str)
     erro = Signal(str)
 
-    def __init__(self, arquivo_origem, pasta_destino, senha=None):
+    def __init__(self, arquivo_origem, pasta_destino, senha=None, targets=None):
         super().__init__()
         self.arquivo_origem = arquivo_origem
         self.pasta_destino = pasta_destino
         self.senha = senha
+        self.targets = targets
 
     def run(self):
         try:
             mensagem, sucesso_bool = logic.restore_backup_process(
                 self.arquivo_origem, 
                 self.pasta_destino, 
-                password=self.senha
+                password=self.senha,
+                targets=self.targets
             )
             if sucesso_bool:
                 self.sucesso.emit(str(mensagem))
@@ -605,75 +607,73 @@ class AbaRestauracao(QWidget):
 
     def setup_ui(self):
         layout_principal = QVBoxLayout(self)
-        layout_principal.setSpacing(15)
+        layout_principal.setSpacing(10)
         layout_principal.setContentsMargins(20, 20, 20, 20)
 
-        # Cabeçalho
         titulo = QLabel("🕒 Restauração de Dados")
         titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #27ae60;")
-        desc = QLabel("Recupere seus arquivos criptografados e compactados em poucos cliques.\nBasta selecionar o pacote de backup desejado, a pasta de destino e inserir a senha (se aplicável).")
+        desc = QLabel("Recupere seus arquivos criptografados. Agora com suporte à restauração seletiva!")
         desc.setWordWrap(True)
-        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px;")
         layout_principal.addWidget(titulo)
         layout_principal.addWidget(desc)
 
-        titulo_arquivo = QLabel("1. Qual arquivo deseja restaurar? (.7z, .zip)")
-        titulo_arquivo.setStyleSheet("font-weight: bold; font-size: 14px;")
         layout_arquivo = QHBoxLayout()
-        self.campo_arquivo = QLineEdit()
-        self.btn_procurar_arquivo = QPushButton("🔍 Selecionar Arquivo")
-        self.btn_procurar_arquivo.setCursor(Qt.PointingHandCursor)
+        self.campo_arquivo = QLineEdit(placeholderText="Caminho do Backup (.7z, .zip)")
+        self.btn_procurar_arquivo = QPushButton("🔍 Procurar")
         self.btn_procurar_arquivo.clicked.connect(self.selecionar_arquivo)
-        layout_arquivo.addWidget(self.campo_arquivo)
+        self.campo_senha = QLineEdit(placeholderText="Senha (se houver)")
+        self.campo_senha.setEchoMode(QLineEdit.Password)
+        self.btn_listar_arquivos = QPushButton("📋 Listar Arquivos")
+        self.btn_listar_arquivos.setStyleSheet("background-color: #2980b9; color: white; font-weight: bold;")
+        self.btn_listar_arquivos.clicked.connect(self.carregar_lista_arquivos)
+        
+        layout_arquivo.addWidget(self.campo_arquivo, stretch=3)
+        layout_arquivo.addWidget(self.campo_senha, stretch=1)
         layout_arquivo.addWidget(self.btn_procurar_arquivo)
+        layout_arquivo.addWidget(self.btn_listar_arquivos)
+        layout_principal.addLayout(layout_arquivo)
 
-        titulo_destino = QLabel("2. Para onde deseja extrair os arquivos?")
-        titulo_destino.setStyleSheet("font-weight: bold; font-size: 14px;")
+        # Nova Lista de Seleção
+        self.lista_arquivos = QListWidget()
+        self.lista_arquivos.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.lista_arquivos.setStyleSheet("QListWidget { background-color: #1e1e1e; color: #00ff00; border: 1px solid #3f3f46; border-radius: 4px; padding: 5px; }")
+        layout_principal.addWidget(QLabel("<b>Selecione os arquivos específicos que deseja restaurar (ou deixe todos marcados):</b>"))
+        layout_principal.addWidget(self.lista_arquivos)
+
+        layout_acoes_lista = QHBoxLayout()
+        self.btn_marcar_todos = QPushButton("☑ Marcar Todos")
+        self.btn_marcar_todos.clicked.connect(lambda: self.alternar_marcacao(True))
+        self.btn_desmarcar_todos = QPushButton("☐ Desmarcar Todos")
+        self.btn_desmarcar_todos.clicked.connect(lambda: self.alternar_marcacao(False))
+        layout_acoes_lista.addWidget(self.btn_marcar_todos)
+        layout_acoes_lista.addWidget(self.btn_desmarcar_todos)
+        layout_acoes_lista.addStretch()
+        layout_principal.addLayout(layout_acoes_lista)
+
         layout_destino = QHBoxLayout()
-        self.campo_destino = QLineEdit()
+        self.campo_destino = QLineEdit(placeholderText="Para onde extrair?")
         self.btn_procurar_destino = QPushButton("📁 Escolher Pasta")
-        self.btn_procurar_destino.setCursor(Qt.PointingHandCursor)
         self.btn_procurar_destino.clicked.connect(self.selecionar_destino)
         layout_destino.addWidget(self.campo_destino)
         layout_destino.addWidget(self.btn_procurar_destino)
+        layout_principal.addLayout(layout_destino)
 
-        titulo_senha = QLabel("3. Senha de Descompactação (Se houver)")
-        titulo_senha.setStyleSheet("font-weight: bold; font-size: 14px;")
-        self.campo_senha = QLineEdit()
-        self.campo_senha.setPlaceholderText("Digite a senha (deixe em branco se não houver)")
-        self.campo_senha.setEchoMode(QLineEdit.Password)
-
-        linha = QFrame()
-        linha.setFrameShape(QFrame.HLine)
-        linha.setStyleSheet("color: #555555;")
-
-        self.btn_restaurar = QPushButton("⏪ INICIAR RESTAURAÇÃO")
-        self.btn_restaurar.setCursor(Qt.PointingHandCursor)
-        self.btn_restaurar.setMinimumHeight(45)
-        self.btn_restaurar.setStyleSheet("QPushButton { background-color: #8e44ad; color: white; font-weight: bold; font-size: 14px; border-radius: 5px; } QPushButton:hover { background-color: #9b59b6; }")
+        self.btn_restaurar = QPushButton("⏪ INICIAR RESTAURAÇÃO SELETIVA")
+        self.btn_restaurar.setMinimumHeight(40)
+        self.btn_restaurar.setStyleSheet("QPushButton { background-color: #8e44ad; color: white; font-weight: bold; font-size: 14px; border-radius: 5px; }")
         self.btn_restaurar.clicked.connect(self.disparar_restauracao)
-
-        self.barra_progresso = QProgressBar()
-        self.barra_progresso.setTextVisible(False)
-        self.barra_progresso.setFixedHeight(10)
-        self.barra_progresso.hide()
-
+        
         self.texto_status = QLabel("")
         self.texto_status.setAlignment(Qt.AlignCenter)
+        self.barra_progresso = QProgressBar()
+        self.barra_progresso.hide()
 
-        layout_principal.addWidget(titulo_arquivo)
-        layout_principal.addLayout(layout_arquivo)
-        layout_principal.addSpacing(10)
-        layout_principal.addWidget(titulo_destino)
-        layout_principal.addLayout(layout_destino)
-        layout_principal.addSpacing(10)
-        layout_principal.addWidget(titulo_senha)
-        layout_principal.addWidget(self.campo_senha)
-        layout_principal.addStretch()
-        layout_principal.addWidget(linha)
         layout_principal.addWidget(self.btn_restaurar)
         layout_principal.addWidget(self.barra_progresso)
         layout_principal.addWidget(self.texto_status)
+        
+        self.arquivos_carregados = []
 
     def selecionar_arquivo(self):
         arquivo, _ = QFileDialog.getOpenFileName(self, "Selecione o Backup", "", "Arquivos Compactados (*.7z *.zip);;Todos os Arquivos (*.*)")
@@ -682,15 +682,64 @@ class AbaRestauracao(QWidget):
     def selecionar_destino(self):
         pasta = QFileDialog.getExistingDirectory(self, "Selecione o Destino da Restauração")
         if pasta: self.campo_destino.setText(pasta)
+        
+    def carregar_lista_arquivos(self):
+        arquivo = self.campo_arquivo.text().strip()
+        senha = self.campo_senha.text()
+        
+        if not arquivo or not os.path.exists(arquivo):
+            QMessageBox.warning(self, "Aviso", "Arquivo de backup não encontrado.")
+            return
+            
+        self.btn_listar_arquivos.setText("⏳ Lendo...")
+        self.btn_listar_arquivos.setEnabled(False)
+        QApplication.processEvents()
+        
+        arquivos, erro = logic.get_archive_files(arquivo, senha)
+        
+        self.btn_listar_arquivos.setText("📋 Listar Arquivos")
+        self.btn_listar_arquivos.setEnabled(True)
+        
+        if erro:
+            QMessageBox.critical(self, "Erro", erro)
+            return
+            
+        self.lista_arquivos.clear()
+        self.arquivos_carregados = arquivos
+        for arq in arquivos:
+            item = QListWidgetItem(arq)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Checked)
+            self.lista_arquivos.addItem(item)
+            
+        self.texto_status.setText(f"{len(arquivos)} arquivos carregados para restauração.")
+        
+    def alternar_marcacao(self, checar):
+        estado = Qt.Checked if checar else Qt.Unchecked
+        for i in range(self.lista_arquivos.count()):
+            self.lista_arquivos.item(i).setCheckState(estado)
 
     def disparar_restauracao(self):
         arquivo = self.campo_arquivo.text().strip()
         destino = self.campo_destino.text().strip()
-        senha_digitada = self.campo_senha.text()
+        senha = self.campo_senha.text()
 
         if not arquivo or not destino:
-            QMessageBox.warning(self, "Aviso", "Selecione o arquivo e destino.")
+            QMessageBox.warning(self, "Aviso", "Selecione o arquivo de backup e a pasta de destino.")
             return
+            
+        alvos = []
+        for i in range(self.lista_arquivos.count()):
+            item = self.lista_arquivos.item(i)
+            if item.checkState() == Qt.Checked:
+                alvos.append(item.text())
+                
+        if self.lista_arquivos.count() > 0 and not alvos:
+            QMessageBox.warning(self, "Aviso", "Você precisa marcar pelo menos um arquivo para restaurar.")
+            return
+
+        if len(alvos) == self.lista_arquivos.count() and self.lista_arquivos.count() > 0:
+            alvos = None
 
         self.btn_restaurar.setEnabled(False)
         self.btn_restaurar.setText("⏳ EXTRAINDO ARQUIVOS...")
@@ -698,12 +747,11 @@ class AbaRestauracao(QWidget):
         self.barra_progresso.show()
         self.texto_status.setText("Descompactando... Isso pode levar alguns minutos.")
 
-        # ✅ NOVO: Disparando o Log de Início
-        self.novo_log.emit("⏪ INICIANDO RESTAURAÇÃO DE ARQUIVO")
+        self.novo_log.emit("⏪ INICIANDO RESTAURAÇÃO SELETIVA")
         self.novo_log.emit(f"Origem: {arquivo}")
         self.novo_log.emit(f"Destino: {destino}")
 
-        self.worker = TrabalhadorRestauracao(arquivo, destino, senha_digitada)
+        self.worker = TrabalhadorRestauracao(arquivo, destino, senha, targets=alvos)
         self.worker.sucesso.connect(self.restauracao_concluida)
         self.worker.erro.connect(self.restauracao_falhou)
         self.worker.start()
@@ -711,16 +759,12 @@ class AbaRestauracao(QWidget):
     def restauracao_concluida(self, resultado):
         self.resetar_interface()
         self.texto_status.setText("✅ Restauração concluída com sucesso!")
-        
-        # ✅ NOVO: Disparando o Log de Sucesso
         self.novo_log.emit(f"✅ SUCESSO: {resultado}")
         QMessageBox.information(self, "Sucesso", resultado)
 
     def restauracao_falhou(self, erro_msg):
         self.resetar_interface()
         self.texto_status.setText("❌ Erro na restauração.")
-        
-        # ✅ NOVO: Disparando o Log de Erro
         self.novo_log.emit(f"❌ ERRO NA RESTAURAÇÃO: {erro_msg}")
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Critical)
@@ -731,7 +775,7 @@ class AbaRestauracao(QWidget):
 
     def resetar_interface(self):
         self.btn_restaurar.setEnabled(True)
-        self.btn_restaurar.setText("⏪ INICIAR RESTAURAÇÃO")
+        self.btn_restaurar.setText("⏪ INICIAR RESTAURAÇÃO SELETIVA")
         self.barra_progresso.hide()
 
 
@@ -1194,7 +1238,18 @@ class AbaDuplicados(QWidget):
         self.tree_resultados.setColumnWidth(0, 500)
         layout.addWidget(self.tree_resultados)
 
-        # Ações
+        # Ações de Seleção
+        h_selecao = QHBoxLayout()
+        self.btn_selecao_inteligente = QPushButton("☑ Seleção Inteligente (Manter 1 de cada)")
+        self.btn_selecao_inteligente.clicked.connect(self.selecao_inteligente)
+        self.btn_desmarcar_todos = QPushButton("☐ Desmarcar Todos")
+        self.btn_desmarcar_todos.clicked.connect(self.desmarcar_todos)
+        h_selecao.addWidget(self.btn_selecao_inteligente)
+        h_selecao.addWidget(self.btn_desmarcar_todos)
+        h_selecao.addStretch()
+        layout.addLayout(h_selecao)
+
+        # Ações Finais
         h_acoes = QHBoxLayout()
         self.btn_remover = QPushButton("🗑️ Remover Selecionados")
         self.btn_remover.setStyleSheet("background-color: #c0392b; font-weight: bold;")
@@ -1267,6 +1322,23 @@ class AbaDuplicados(QWidget):
         self.btn_remover.setEnabled(True)
         self.btn_scan.setEnabled(True)
         self.log(f"Encontrados {len(resultados)} grupos de arquivos idênticos.")
+
+    def selecao_inteligente(self):
+        for i in range(self.tree_resultados.topLevelItemCount()):
+            grupo = self.tree_resultados.topLevelItem(i)
+            for j in range(grupo.childCount()):
+                child = grupo.child(j)
+                if j == 0:
+                    child.setCheckState(0, Qt.Unchecked)
+                else:
+                    child.setCheckState(0, Qt.Checked)
+
+    def desmarcar_todos(self):
+        for i in range(self.tree_resultados.topLevelItemCount()):
+            grupo = self.tree_resultados.topLevelItem(i)
+            for j in range(grupo.childCount()):
+                child = grupo.child(j)
+                child.setCheckState(0, Qt.Unchecked)
 
     def remover_selecionados(self):
         arquivos_para_remover = []

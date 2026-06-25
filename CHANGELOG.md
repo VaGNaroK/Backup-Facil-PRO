@@ -1,6 +1,17 @@
 📝 Changelog - Backup Fácil Professional
 Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fácil Professional desde o seu início.
 
+## [0.4.1] - 2026-06-24
+
+### Adicionado
+- **Restauração Seletiva:** A aba de Restauração foi completamente reformulada. Agora é possível listar o conteúdo de um arquivo `.7z` antes de extrair e utilizar caixas de seleção interativas para recuperar pastas ou arquivos específicos.
+- **Ferramentas de Seleção em Massa:** Adicionados botões "Marcar Todos", "Desmarcar Todos" na aba de Restauração, e um botão "Seleção Inteligente (Manter 1 de cada)" na aba de Remover Duplicados para facilitar limpezas em grande escala.
+- **Checkboxes Vetoriais (UI):** O estilo visual das caixas de seleção em listas e árvores foi atualizado para utilizar ícones SVG vetoriais (injetados dinamicamente), garantindo renderização perfeita no tema Dark do PySide6, sem esticamento ou bugs gráficos.
+
+### Alterado
+- **Migração para xxHash:** O motor de integridade e checagem de arquivos substituiu o algoritmo MD5 pelo **xxHash** nativo em C (extremamente rápido e focado em performance não-criptográfica), aumentando violentamente a velocidade de busca de duplicatas e criação de backups.
+- **Buffer de Leitura de Disco:** O tamanho do bloco de leitura para arquivos grandes (`chunk_size`) subiu de 4KB para 8KB, tirando o máximo de proveito da velocidade extra de processamento do novo motor xxHash.
+
 ## [0.4.0] - 2026-06-21
 
 ### Adicionado

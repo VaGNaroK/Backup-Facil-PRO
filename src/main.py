@@ -59,10 +59,24 @@ QPushButton:hover { background-color: #4e4e52; border: 1px solid #007acc; }
 QPushButton:pressed { background-color: #007acc; }
 QCheckBox { color: #e0e0e0; font-weight: bold; }
 QCheckBox::indicator { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #3f3f46; background-color: #2d2d30; }
-QCheckBox::indicator:checked { background-color: #27ae60; border: 1px solid #27ae60; }
-QTreeView::indicator { width: 14px; height: 14px; border-radius: 7px; border: 1px solid #95a5a6; background-color: #2d2d30; }
-QTreeView::indicator:checked { background-color: #27ae60; border: 1px solid #27ae60; }
-QTreeView::indicator:unchecked:hover { border: 1px solid #007acc; }
+
+QTreeView::indicator, QListView::indicator {
+    width: 14px;
+    height: 14px;
+    margin: 4px;
+    border-radius: 3px;
+    border: 1px solid #95a5a6;
+    background-color: #2d2d30;
+}
+QTreeView::indicator:unchecked:hover, QListView::indicator:unchecked:hover {
+    border: 1px solid #007acc;
+}
+
+QCheckBox::indicator:checked, QTreeView::indicator:checked, QListView::indicator:checked {
+    background-color: #27ae60;
+    border: 1px solid #27ae60;
+    image: url({check_icon_path});
+}
 """
 
 class JanelaPrincipal(QMainWindow):
@@ -110,7 +124,9 @@ class JanelaPrincipal(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyleSheet(ESTILO_DARK)
+    
+    check_icon_path = get_asset_path("icons/check.svg").replace('\\', '/')
+    app.setStyleSheet(ESTILO_DARK.replace("{check_icon_path}", check_icon_path))
     
     # Adiciona o ícone também na barra de tarefas do sistema operacional
     # TODO: Atualizar uso do icon.png para icon.svg no futuro para melhor escalonamento.
