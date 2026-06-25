@@ -65,7 +65,7 @@ if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
 Remove-Item -Force "*.spec" -ErrorAction SilentlyContinue
 
 Write-Host "`n[2] Iniciando o PyInstaller (PySide6)..." -ForegroundColor Cyan
-& $pythonExe -m PyInstaller --noconsole --onefile --name $appName --icon="assets\icons\icon.ico" --add-data "assets;assets" --hidden-import logic --hidden-import ui_components src\main.py
+& $pythonExe -m PyInstaller --noconsole --onefile --name $appName --icon="assets\icons\icon.ico" --add-data "assets;assets" --paths "src" src\main.py
 
 Write-Host "`n[3] Limpeza final profunda..." -ForegroundColor Cyan
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }

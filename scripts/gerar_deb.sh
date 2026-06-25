@@ -39,8 +39,7 @@ echo -e "\n⏳ Compilando o binário a partir do código fonte..."
 python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" \
     --icon="assets/icons/icon.png" \
     --add-data "assets:assets" \
-    --hidden-import logic \
-    --hidden-import ui_components \
+    --paths "src" \
     src/main.py
 
 # Verifica se a compilação teve sucesso
