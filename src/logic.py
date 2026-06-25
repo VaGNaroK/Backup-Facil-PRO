@@ -844,9 +844,13 @@ def delete_duplicate_files(file_paths, log_cb=None):
     success_count = 0
     for path in file_paths:
         try:
-            send2trash.send2trash(path)
+            # send2trash no Windows exige caminhos absolutos e barras normalizadas
+            clean_path = os.path.normpath(os.path.abspath(path))
+            send2trash.send2trash(clean_path)
             if log_cb: log_cb(f"Enviado para a lixeira: {path}")
             success_count += 1
-        except OSError as e:
-            if log_cb: log_cb(f"Erro ao remover {path}: {e}")
+        except Exception as e:
+            if log_cb: log_cb(f"Erro ao enviar para a lixeira {path}: {e}")
+            # Em caso de falha silenciosa da lixeira do Windows com alguns arquivos,
+            # podemos registrar o erro real que a lib possa gerar em vez de só OSError.
     return success_count

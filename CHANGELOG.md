@@ -8,6 +8,7 @@ Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fác
 - **Múltipla Seleção de Pastas:** A tela nativa para seleção de pastas (aba Backup) foi atualizada para permitir escolher múltiplas pastas de uma única vez segurando as teclas `CTRL` ou `SHIFT`.
 
 ### Corrigido
+- **Bug da Lixeira no Windows:** Corrigido o problema onde o envio de arquivos para a lixeira falhava silenciosamente no Windows devido à não aceitação de barras mistas (`/` e `\`) na API do sistema (`SHFileOperation`). Os caminhos agora são estritamente formatados (`os.path.normpath`) e absolutizados antes de serem despachados.
 - **Som de Conclusão na Restauração:** O som de "tarefa concluída" agora também é tocado corretamente ao final do processo de restauração (antes, tocava apenas nos backups).
 - **Tema Escuro em Tabelas (Windows):** Corrigido um bug visual na compilação Windows onde os cabeçalhos das tabelas (como na aba Remover Duplicados) ficavam com texto e fundo brancos no modo escuro.
 - **Informação de Hash:** A aba "Sobre" foi atualizada para refletir com precisão que o algoritmo atual de banco de dados e checagens é o `xxHash`, substituindo a antiga menção ao `MD5`.

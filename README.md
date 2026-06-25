@@ -2,7 +2,7 @@
 
 Uma ferramenta de desktop robusta e multiplataforma para automação, gestão e criptografia de backups locais. Desenvolvida em Python com uma interface gráfica moderna e responsiva utilizando **PySide6** (Qt).
 
-![Versão](https://img.shields.io/badge/vers%C3%A3o-0.3.9-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-0.4.2-blue)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-green)
 ![Flatpak](https://img.shields.io/badge/Distribui%C3%A7%C3%A3o-Flatpak-brightgreen)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-GPL--3.0-orange)
@@ -113,7 +113,7 @@ Para distribuições baseadas em Debian/Mint:
    ```bash
    chmod +x scripts/gerar_deb.sh
    ./scripts/gerar_deb.sh
-   sudo dpkg -i backup-facil-pro_0.3.9_amd64.deb
+   sudo dpkg -i backup-facil-pro_0.4.2_amd64.deb
    ```
 
 ## 🪟 Como Compilar (Windows)
