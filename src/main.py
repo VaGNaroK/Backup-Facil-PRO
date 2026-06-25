@@ -77,6 +77,13 @@ QCheckBox::indicator:checked, QTreeView::indicator:checked, QListView::indicator
     border: 1px solid #27ae60;
     image: url({check_icon_path});
 }
+
+QHeaderView::section {
+    background-color: #2d2d30;
+    color: #e0e0e0;
+    padding: 4px;
+    border: 1px solid #3f3f46;
+}
 """
 
 class JanelaPrincipal(QMainWindow):

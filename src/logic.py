@@ -15,11 +15,12 @@ import keyring
 from datetime import datetime
 import py7zr
 from plyer import notification
+import send2trash
 
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.4.1"
+APP_VERSION = "0.4.2"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
@@ -843,8 +844,8 @@ def delete_duplicate_files(file_paths, log_cb=None):
     success_count = 0
     for path in file_paths:
         try:
-            os.remove(path)
-            if log_cb: log_cb(f"Removido com sucesso: {path}")
+            send2trash.send2trash(path)
+            if log_cb: log_cb(f"Enviado para a lixeira: {path}")
             success_count += 1
         except OSError as e:
             if log_cb: log_cb(f"Erro ao remover {path}: {e}")

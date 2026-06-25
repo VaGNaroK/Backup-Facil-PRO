@@ -1,6 +1,17 @@
 📝 Changelog - Backup Fácil Professional
 Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fácil Professional desde o seu início.
 
+## [0.4.2] - 2026-06-25
+
+### Adicionado
+- **Lixeira Inteligente (Remoção de Duplicados):** Integrada a biblioteca `send2trash`. Ao invés de deletar arquivos duplicados permanentemente, o aplicativo agora os envia para a lixeira do sistema (Windows, macOS e Linux) por segurança.
+- **Múltipla Seleção de Pastas:** A tela nativa para seleção de pastas (aba Backup) foi atualizada para permitir escolher múltiplas pastas de uma única vez segurando as teclas `CTRL` ou `SHIFT`.
+
+### Corrigido
+- **Som de Conclusão na Restauração:** O som de "tarefa concluída" agora também é tocado corretamente ao final do processo de restauração (antes, tocava apenas nos backups).
+- **Tema Escuro em Tabelas (Windows):** Corrigido um bug visual na compilação Windows onde os cabeçalhos das tabelas (como na aba Remover Duplicados) ficavam com texto e fundo brancos no modo escuro.
+- **Informação de Hash:** A aba "Sobre" foi atualizada para refletir com precisão que o algoritmo atual de banco de dados e checagens é o `xxHash`, substituindo a antiga menção ao `MD5`.
+
 ## [0.4.1] - 2026-06-24
 
 ### Adicionado

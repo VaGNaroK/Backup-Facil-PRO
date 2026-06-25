@@ -24,3 +24,6 @@ pyinstaller>=6.0.0
 
 # Algoritmo de Hash Ultra-rápido (xxHash)
 xxhash>=3.4.1
+
+# Enviar arquivos para a lixeira do sistema operacional
+send2trash>=1.8.0

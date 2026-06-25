@@ -302,10 +302,18 @@ class AbaBackup(QWidget):
         if pasta: self.campo_destino.setText(pasta)
 
     def adicionar_origem(self):
-        pasta = QFileDialog.getExistingDirectory(self, "Adicionar Pasta")
-        if pasta:
-            if pasta not in [self.lista_pastas.item(i).text() for i in range(self.lista_pastas.count())]:
-                self.lista_pastas.addItem(pasta)
+        dialog = QFileDialog(self, "Adicionar Pastas")
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        for view in dialog.findChildren(QAbstractItemView):
+            view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        if dialog.exec():
+            pastas = dialog.selectedFiles()
+            for pasta in pastas:
+                if pasta not in [self.lista_pastas.item(i).text() for i in range(self.lista_pastas.count())]:
+                    self.lista_pastas.addItem(pasta)
 
     def adicionar_arquivo(self):
         arquivos, _ = QFileDialog.getOpenFileNames(self, "Adicionar Arquivos")
@@ -760,6 +768,22 @@ class AbaRestauracao(QWidget):
         self.resetar_interface()
         self.texto_status.setText("✅ Restauração concluída com sucesso!")
         self.novo_log.emit(f"✅ SUCESSO: {resultado}")
+        
+        # Toca o som de conclusão
+        try:
+            if getattr(sys, 'frozen', False):
+                base_dir = sys._MEIPASS
+            else:
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            sound_path = os.path.join(base_dir, "assets", "sounds", "done.wav")
+            if os.path.exists(sound_path):
+                self.som_ok = QSoundEffect()
+                self.som_ok.setSource(QUrl.fromLocalFile(sound_path))
+                self.som_ok.setVolume(1.0)
+                self.som_ok.play()
+        except Exception as e:
+            print(f"Erro ao tocar som: {e}")
+
         QMessageBox.information(self, "Sucesso", resultado)
 
     def restauracao_falhou(self, erro_msg):
@@ -988,7 +1012,7 @@ class AbaSobre(QWidget):
             "gestão e criptografia de backups locais.\n\n"
             "• Busca e remoção de arquivos duplicados com algoritmo em 4 camadas\n"
             "• Otimização de compressão Multi-Threading no py7zr\n"
-            "• Backups completos e incrementais com motor SQLite/MD5\n"
+            "• Backups completos e incrementais com motor SQLite/xxHash\n"
             "• Criptografia AES-256 via compressão .7z\n"
             "• Filtros avançados por extensão e Expressões Regulares\n"
             "• Comparador de arquivos entre backups\n"
@@ -1353,11 +1377,11 @@ class AbaDuplicados(QWidget):
             QMessageBox.warning(self, "Aviso", "Nenhum arquivo foi selecionado para exclusão.")
             return
 
-        resp = QMessageBox.question(self, "Confirmação", f"Tem certeza que deseja excluir permanentemente {len(arquivos_para_remover)} arquivos?", QMessageBox.Yes | QMessageBox.No)
+        resp = QMessageBox.question(self, "Confirmação", f"Tem certeza que deseja enviar {len(arquivos_para_remover)} arquivos para a lixeira?", QMessageBox.Yes | QMessageBox.No)
         if resp == QMessageBox.Yes:
-            self.log(f"Iniciando exclusão de {len(arquivos_para_remover)} arquivos...")
+            self.log(f"Enviando {len(arquivos_para_remover)} arquivos para a lixeira...")
             sucessos = logic.delete_duplicate_files(arquivos_para_remover, self.log)
-            QMessageBox.information(self, "Concluído", f"Excluídos {sucessos} de {len(arquivos_para_remover)} arquivos selecionados.")
+            QMessageBox.information(self, "Concluído", f"Enviados {sucessos} de {len(arquivos_para_remover)} arquivos selecionados para a lixeira.")
             self.tree_resultados.clear()
             self.btn_remover.setEnabled(False)
             self.entrada_dir.setText("")
