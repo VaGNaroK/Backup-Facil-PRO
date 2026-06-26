@@ -31,48 +31,50 @@ if not logger.handlers:
     logger.addHandler(_fh)
 
 # ==========================================
-# 🧭 GPS DE DIRETÓRIOS (ATUALIZADO PARA FLATPAK/LINUX)
+# 🧭 GPS DE DIRETÓRIOS E MIGRAÇÃO
 # ==========================================
-def get_base_dir():
-    """Descobre a raiz do projeto e define onde salvar os dados de forma segura"""
+def get_data_dir():
+    """Descobre a raiz de dados do usuário e define onde salvar as configs."""
+    user_home = os.path.expanduser("~")
     
-    # 1. Checagem VIP para Flatpak (O sandbox redireciona o ~ automaticamente para ~/.var/app/...)
+    # 1. Checagem VIP para Flatpak (O sandbox redireciona o ~ automaticamente)
     if os.environ.get("FLATPAK_ID"):
-        flatpak_data_dir = os.path.join(os.path.expanduser("~"), "data")
-        os.makedirs(flatpak_data_dir, exist_ok=True)
-        return flatpak_data_dir
+        return os.path.join(user_home, "data")
 
-    # 1.5. Checagem VIP para AppImage (Sistema de arquivos interno é Somente Leitura)
-    if os.environ.get("APPIMAGE"):
-        appimage_config_dir = os.path.join(os.path.expanduser("~"), ".config", "backup_facil_pro")
-        os.makedirs(appimage_config_dir, exist_ok=True)
-        return appimage_config_dir
+    # 1.5. Checagem para AppImage ou instaladores globais Linux (.deb)
+    if os.environ.get("APPIMAGE") or (getattr(sys, 'frozen', False) and os.path.dirname(sys.executable) == '/usr/bin'):
+        return os.path.join(user_home, ".config", "backup_facil_pro")
 
-    # 2. Checagem para instaladores nativos (.deb ou Windows .exe)
-    if getattr(sys, 'frozen', False):
-        exe_dir = os.path.dirname(sys.executable)
-        # Se foi instalado globalmente no Linux (via .deb)
-        if exe_dir == '/usr/bin':
-            user_config_dir = os.path.join(os.path.expanduser("~"), ".config", "backup_facil_pro")
-            os.makedirs(user_config_dir, exist_ok=True)
-            return user_config_dir
-        else:
-            # Se for um .exe portátil do Windows ou rodando de um pendrive
-            return exe_dir
-    else:
-        # 3. Se for código fonte (.py) rodando solto no terminal
-        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # 2. Para executável Windows portátil ou código fonte
+    return os.path.join(user_home, ".backup_facil_pro")
 
-BASE_DIR = get_base_dir()
-
-# Ajuste no DATA_DIR para não duplicar pastas 'data' nas versões instaladas
-if os.environ.get("FLATPAK_ID") or BASE_DIR.endswith("backup_facil_pro"): 
-    DATA_DIR = BASE_DIR
-else:
-    # Se for código fonte ou portátil, cria a subpasta 'data'
-    DATA_DIR = os.path.join(BASE_DIR, "data")
-
+DATA_DIR = get_data_dir()
 os.makedirs(DATA_DIR, exist_ok=True)
+
+# Migração de dados caso o usuário venha da versão antiga (com pasta data na raiz)
+def migrate_old_data_if_needed():
+    if getattr(sys, 'frozen', False):
+        old_base = os.path.dirname(sys.executable)
+    else:
+        old_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    old_data_dir = os.path.join(old_base, "data")
+    
+    # Se a pasta data antiga existir e for diferente do novo DATA_DIR
+    if os.path.exists(old_data_dir) and os.path.abspath(old_data_dir) != os.path.abspath(DATA_DIR):
+        try:
+            for item in os.listdir(old_data_dir):
+                s = os.path.join(old_data_dir, item)
+                d = os.path.join(DATA_DIR, item)
+                if not os.path.exists(d):
+                    shutil.move(s, d)
+            # Tenta remover a pasta data antiga se ficou vazia
+            if not os.listdir(old_data_dir):
+                os.rmdir(old_data_dir)
+        except Exception as e:
+            logger.warning(f"Erro ao migrar dados antigos: {e}")
+
+migrate_old_data_if_needed()
 
 # Aponta os ficheiros para o diretório correto
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
@@ -840,9 +842,14 @@ def scan_duplicates(directory, progress_cb=None, log_cb=None, abort_event=None):
     if progress_cb: progress_cb(100)
     return final_dupes
 
-def delete_duplicate_files(file_paths, log_cb=None):
+def delete_duplicate_files(file_paths, log_cb=None, progress_cb=None):
     success_count = 0
-    for path in file_paths:
+    total = len(file_paths)
+    if total == 0:
+        if progress_cb: progress_cb(100)
+        return 0
+        
+    for idx, path in enumerate(file_paths):
         try:
             # send2trash no Windows exige caminhos absolutos e barras normalizadas
             clean_path = os.path.normpath(os.path.abspath(path))
@@ -853,4 +860,6 @@ def delete_duplicate_files(file_paths, log_cb=None):
             if log_cb: log_cb(f"Erro ao enviar para a lixeira {path}: {e}")
             # Em caso de falha silenciosa da lixeira do Windows com alguns arquivos,
             # podemos registrar o erro real que a lib possa gerar em vez de só OSError.
+        if progress_cb:
+            progress_cb(int(((idx + 1) / total) * 100))
     return success_count

@@ -3,7 +3,8 @@
 ## Decisões Arquiteturais
 - Arquitetura separada em lógica (`logic.py`), interface gráfica (`ui_components.py`), e ponto de entrada (`main.py`).
 - Uso do `PySide6` (Qt) para a interface gráfica.
-- "GPS de Diretórios Dinâmico": lógica para detectar se roda em Flatpak, AppImage (Sistema Somente Leitura) ou Nativo, redirecionando o salvamento de dados adequadamente para pastas seguras de usuário (`~/.var/app/` ou `~/.config/`).
+- "GPS de Diretórios Dinâmico": lógica para detectar se roda em Flatpak, AppImage ou Nativo, redirecionando o salvamento de dados para `~/.backup_facil_pro` (com sistema de migração retroativa) ou `~/.config/`.
+- Uso de Threads (QThread) em operações pesadas, como busca e exclusão de arquivos duplicados, garantindo a responsividade da UI.
 - Backups incrementais controlados via banco de dados SQLite e Hashes super-rápidos via `xxhash`.
 - Criptografia e compressão em formato `.7z` utilizando AES-256 (via `py7zr`).
 - Suporte a seleção de arquivos isolados para backup (além de diretórios completos). Arquivos isolados são armazenados diretamente na raiz do contêiner `.7z`.

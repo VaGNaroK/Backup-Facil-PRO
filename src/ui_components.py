@@ -1207,6 +1207,24 @@ class TrabalhadorDuplicados(QThread):
     def abort(self):
         self.abort_event.set()
 
+class TrabalhadorRemoverDuplicados(QThread):
+    progresso = Signal(int)
+    log_emitido = Signal(str)
+    concluido = Signal(int)
+
+    def __init__(self, arquivos):
+        super().__init__()
+        self.arquivos = arquivos
+
+    def run(self):
+        try:
+            def cb_progresso(v): self.progresso.emit(v)
+            def cb_log(msg): self.log_emitido.emit(msg)
+            sucessos = logic.delete_duplicate_files(self.arquivos, cb_log, cb_progresso)
+            self.concluido.emit(sucessos)
+        except Exception as e:
+            self.log_emitido.emit(f"Erro inesperado durante exclusão: {e}")
+            self.concluido.emit(0)
 
 # ==================== ABA DUPLICADOS ====================
 class AbaDuplicados(QWidget):
@@ -1379,9 +1397,24 @@ class AbaDuplicados(QWidget):
 
         resp = QMessageBox.question(self, "Confirmação", f"Tem certeza que deseja enviar {len(arquivos_para_remover)} arquivos para a lixeira?", QMessageBox.Yes | QMessageBox.No)
         if resp == QMessageBox.Yes:
-            self.log(f"Enviando {len(arquivos_para_remover)} arquivos para a lixeira...")
-            sucessos = logic.delete_duplicate_files(arquivos_para_remover, self.log)
-            QMessageBox.information(self, "Concluído", f"Enviados {sucessos} de {len(arquivos_para_remover)} arquivos selecionados para a lixeira.")
-            self.tree_resultados.clear()
+            self.log(f"Iniciando exclusão de {len(arquivos_para_remover)} arquivos...")
             self.btn_remover.setEnabled(False)
-            self.entrada_dir.setText("")
+            self.btn_scan.setEnabled(False)
+            self.progresso.setValue(0)
+            
+            self.trabalhador_remocao = TrabalhadorRemoverDuplicados(arquivos_para_remover)
+            self.trabalhador_remocao.progresso.connect(self.progresso.setValue)
+            self.trabalhador_remocao.log_emitido.connect(self.log)
+            
+            # Salvar o total para a mensagem final
+            self.total_a_remover = len(arquivos_para_remover)
+            self.trabalhador_remocao.concluido.connect(self.remocao_concluida)
+            self.trabalhador_remocao.start()
+
+    def remocao_concluida(self, sucessos):
+        QMessageBox.information(self, "Concluído", f"Enviados {sucessos} de {self.total_a_remover} arquivos selecionados para a lixeira.")
+        self.tree_resultados.clear()
+        self.btn_remover.setEnabled(False)
+        self.btn_scan.setEnabled(True)
+        self.entrada_dir.setText("")
+        self.progresso.setValue(100)

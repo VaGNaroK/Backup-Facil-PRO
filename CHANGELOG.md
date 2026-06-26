@@ -4,6 +4,8 @@ Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fác
 ## [0.4.2] - 2026-06-25
 
 ### Adicionado
+- **Barra de Progresso na Exclusão:** Adicionada uma barra de progresso responsiva que impede travamentos na UI durante a exclusão de dezenas/centenas de arquivos duplicados, executando a ação de lixeira de forma assíncrona.
+- **Migração Inteligente do Diretório de Dados:** A pasta `data` (que salvava os perfis e histórico no local do executável ou na Área de Trabalho) foi migrada de forma segura para o diretório padrão de usuário (ex: `C:\Users\Nome\.backup_facil_pro`). Dados antigos são automaticamente detectados e movidos na inicialização para prevenir perda de informações.
 - **Lixeira Inteligente (Remoção de Duplicados):** Integrada a biblioteca `send2trash`. Ao invés de deletar arquivos duplicados permanentemente, o aplicativo agora os envia para a lixeira do sistema (Windows, macOS e Linux) por segurança.
 - **Múltipla Seleção de Pastas:** A tela nativa para seleção de pastas (aba Backup) foi atualizada para permitir escolher múltiplas pastas de uma única vez segurando as teclas `CTRL` ou `SHIFT`.
 
