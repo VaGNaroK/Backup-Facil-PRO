@@ -39,9 +39,10 @@ BACKUP_FACIL/
 ├── assets/                 # Ícone (256x256) e recursos visuais
 │   └── sounds/             # Efeitos sonoros
 ├── scripts/                # Scripts de compilação e empacotamento
-│   ├── gerar_deb.sh        # Script gerador do instalador Linux Mint/Debian
+│   ├── gerar_appimage.sh   # Script gerador do formato portátil AppImage
 │   ├── gerar_exe.ps1       # Script gerador do executável Windows via PowerShell
-│   └── gerar_flatpak.sh    # Script automatizado para compilar e empacotar o Flatpak
+│   ├── gerenciador_builds.sh # Menu interativo unificado (Linux - DEB/Flatpak)
+│   └── limpar_builds.sh    # Script para limpeza profunda de cache de compilações
 ├── io.github.vagnarok.BackupFacilPro.yml  # Manifesto Flatpak
 ├── requirements.txt        # Dependências do projeto
 └── README.md               # Documentação
@@ -55,9 +56,9 @@ Caso você utilize Linux (Debian/Ubuntu/Mint) e se depare com o erro `Could not 
 sudo apt install libxcb-cursor0
 ```
 
-Além disso, para compilar a biblioteca de notificações (DBUS) no seu ambiente Python, instale os pacotes de desenvolvimento do sistema:
+Além disso, para compilar a biblioteca de notificações (DBUS), criar ambientes virtuais Python e evitar erros de compilação (especialmente no WSL ou Linux puro ao instalar pacotes como o PySide6), instale os pacotes de desenvolvimento do sistema:
 ```bash
-sudo apt install libdbus-1-dev libglib2.0-dev python3-dev
+sudo apt install libdbus-1-dev libglib2.0-dev python3-dev python3-venv build-essential libpulse0
 ```
 
 1. Clone o repositório:
@@ -89,51 +90,44 @@ sudo apt install flatpak flatpak-builder
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 ```
 
-1. **Dê permissão de execução ao script (apenas na primeira vez):**
+1. **Dê permissão de execução ao script:**
    ```bash
-   chmod +x scripts/gerar_flatpak.sh
+   chmod +x scripts/gerenciador_builds.sh
    ```
 
-2. **Gere e instale o pacote automaticamente:**
-   O script lerá a versão direto do código fonte, compilará o pacote `.flatpak` na raiz do projeto e **já o instalará no seu sistema** ao final do processo, pronto para uso imediato!
+2. **Gere e instale o pacote via Menu Interativo:**
+   O script abrirá um menu. Selecione a opção correspondente ao Flatpak. Ele lerá a versão do código fonte, compilará o `.flatpak` e perguntará interativamente se você já deseja instalá-lo no sistema!
    ```bash
-   ./scripts/gerar_flatpak.sh
+   ./scripts/gerenciador_builds.sh
    ```
 
 ## 📦 Como Compilar e Instalar (Linux - .deb)
 
-Para distribuições baseadas em Debian/Mint:
+Para distribuições baseadas em Debian/Mint, todo o processo agora é unificado:
 
-1. **Gerar Binário via PyInstaller:**
+1. **Gere o pacote via Menu Interativo:**
+   O script compilará o código via PyInstaller e fechará o pacote `.deb` automaticamente.
    ```bash
-   python3 -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" --icon="assets/icon.png" --add-data "assets:assets" --hidden-import logic --hidden-import ui_components src/main.py
+   chmod +x scripts/gerenciador_builds.sh
+   ./scripts/gerenciador_builds.sh
    ```
+   *(Escolha a opção de gerar pacote .DEB no menu)*
 
-2. **Gerar e Instalar o Pacote:**
+2. **Instale o pacote:**
    ```bash
-   chmod +x scripts/gerar_deb.sh
-   ./scripts/gerar_deb.sh
-   sudo dpkg -i backup-facil-pro_0.4.2_amd64.deb
+   sudo dpkg -i backup-facil-pro_VERSAO_amd64.deb
    ```
 
 ## 🪟 Como Compilar (Windows)
 
-1. Abra o PowerShell no diretório do projeto e crie o ambiente virtual:
-   ```powershell
-   python -m venv venv
-   ```
-
-2. Libere a execução de scripts no seu terminal (necessário apenas nesta janela) e ative o ambiente virtual:
+1. Abra o PowerShell no diretório do projeto, libere a execução de scripts e rode o gerador automatizado:
    ```powershell
    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-   .\venv\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   ```
-
-3. Execute o script gerador automatizado:
-   ```powershell
    .\scripts\gerar_exe.ps1
    ```
+
+*(Nota: O script detectará e criará automaticamente um ambiente virtual isolado chamado `venv_win`, sem conflitar com o WSL, instalando tudo o que é necessário antes da compilação).*
+
 O executável final com a versão correspondente será gerado dentro da pasta `dist`!
 
 ---

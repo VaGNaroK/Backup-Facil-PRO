@@ -9,7 +9,9 @@
 - Criptografia e compressão em formato `.7z` utilizando AES-256 (via `py7zr`).
 - Suporte a seleção de arquivos isolados para backup (além de diretórios completos). Arquivos isolados são armazenados diretamente na raiz do contêiner `.7z`.
 - Restauração Seletiva e Interativa: Leitura do conteúdo do `.7z` em memória e extração filtrada de alvos selecionados via checkbox pelo usuário.
-- Pipeline de empacotamento universal via `flatpak-builder`, e scripts para `.deb`, `.AppImage` portátil e executável Windows.
+- Pipeline de empacotamento: 
+  - Linux: Scripts unificados através do menu interativo `gerenciador_builds.sh` (abrangendo Flatpak, DEB e limpeza de cache).
+  - Windows: Script PowerShell automatizado que utiliza uma virtual environment independente (`venv_win`) para evitar conflitos de arquitetura e pacotes com desenvolvedores utilizando o WSL.
 
 ## Tecnologias Oficiais
 - Python 3.11+
@@ -24,7 +26,7 @@
 - Garantir suporte e tratamento de caminhos considerando o ambiente Sandbox do Flatpak.
 
 ## Bugs Históricos Importantes
-- (Espaço reservado para documentação de bugs passados)
+- **WSL/Linux (Falta de Bibliotecas):** Usuários frequentemente esbarravam em falhas ao tentar criar o `venv` (falta de `python3-venv`), compilar pacotes C/C++ como `xxhash` (falta de `build-essential`), e falhas de runtime ao tentar tocar áudio com `PySide6.QtMultimedia` (falta de `libpulse0` e `libasound2`). O `README.md` conta agora com um bloco robusto de dependências preventivas.
 
 ## Limitações Conhecidas
 - (Espaço reservado para limitações conhecidas)

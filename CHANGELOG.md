@@ -8,6 +8,9 @@ Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fác
 - **Migração Inteligente do Diretório de Dados:** A pasta `data` (que salvava os perfis e histórico no local do executável ou na Área de Trabalho) foi migrada de forma segura para o diretório padrão de usuário (ex: `C:\Users\Nome\.backup_facil_pro`). Dados antigos são automaticamente detectados e movidos na inicialização para prevenir perda de informações.
 - **Lixeira Inteligente (Remoção de Duplicados):** Integrada a biblioteca `send2trash`. Ao invés de deletar arquivos duplicados permanentemente, o aplicativo agora os envia para a lixeira do sistema (Windows, macOS e Linux) por segurança.
 - **Múltipla Seleção de Pastas:** A tela nativa para seleção de pastas (aba Backup) foi atualizada para permitir escolher múltiplas pastas de uma única vez segurando as teclas `CTRL` ou `SHIFT`.
+- **Menu Unificado de Builds:** Criado o script interativo `gerenciador_builds.sh` no Linux, concentrando a compilação de `.deb`, `.flatpak`, limpeza de caches e a confirmação interativa de instalação automática.
+- **Isolamento de Ambiente Virtual (Windows):** O script `gerar_exe.ps1` agora cria e gerencia de forma inteligente uma venv dedicada e ignorada pelo git (`venv_win`), impedindo que o script sobrescreva ou quebre a venv padrão (do WSL/Linux) de desenvolvedores híbridos.
+- **Dependências Linux/WSL:** Documentação enriquecida para alertar desenvolvedores instalando o projeto sobre pacotes essenciais (`python3-venv`, `build-essential` e `libpulse0`) para evitar erros do PySide6 QtMultimedia ou quebras durante o `pip install`.
 
 ### Corrigido
 - **Bug da Lixeira no Windows:** Corrigido o problema onde o envio de arquivos para a lixeira falhava silenciosamente no Windows devido à não aceitação de barras mistas (`/` e `\`) na API do sistema (`SHFileOperation`). Os caminhos agora são estritamente formatados (`os.path.normpath`) e absolutizados antes de serem despachados.

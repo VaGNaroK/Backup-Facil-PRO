@@ -24,13 +24,24 @@ if ($missingFiles) {
     exit
 }
 
-# 0.2. Gerenciar Ambiente Virtual (venv) e Dependencias Automaticamente
-$venvPath = Join-Path $projectRoot.Path "venv"
+# 0.1.5. Verificar se o Python esta instalado
+try {
+    $pythonVer = & python --version 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "Python nao encontrado" }
+    Write-Host "[i] Python detectado: $pythonVer" -ForegroundColor Green
+} catch {
+    Write-Host "[X] ERRO: Python nao esta instalado ou nao foi adicionado as Variaveis de Ambiente (PATH)." -ForegroundColor Red
+    Read-Host -Prompt "Pressione Enter para sair..."
+    exit
+}
+
+# 0.2. Gerenciar Ambiente Virtual Dedicado para Windows (venv_win)
+$venvPath = Join-Path $projectRoot.Path "venv_win"
 $pythonExe = Join-Path $venvPath "Scripts\python.exe"
 
-if (-not (Test-Path $venvPath)) {
-    Write-Host "`n[i] Ambiente virtual (venv) nao encontrado. Criando agora (pode levar alguns segundos)..." -ForegroundColor Yellow
-    python -m venv venv
+if (-not (Test-Path $pythonExe)) {
+    Write-Host "`n[i] Ambiente virtual dedicado (venv_win) para Windows nao encontrado. Criando agora..." -ForegroundColor Yellow
+    python -m venv venv_win
     if (-not $?) {
         Write-Host "[X] ERRO: Falha ao criar o ambiente virtual. Verifique se o Python esta instalado nas Variaveis de Ambiente." -ForegroundColor Red
         Read-Host -Prompt "Pressione Enter para sair..."
