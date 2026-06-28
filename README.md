@@ -41,8 +41,7 @@ BACKUP_FACIL/
 ├── scripts/                # Scripts de compilação e empacotamento
 │   ├── gerar_appimage.sh   # Script gerador do formato portátil AppImage
 │   ├── gerar_exe.ps1       # Script gerador do executável Windows via PowerShell
-│   ├── gerenciador_builds.sh # Menu interativo unificado (Linux - DEB/Flatpak)
-│   └── limpar_builds.sh    # Script para limpeza profunda de cache de compilações
+│   └── gerenciador_builds.sh # Menu interativo unificado (Linux - DEB/Flatpak)
 ├── io.github.vagnarok.BackupFacilPro.yml  # Manifesto Flatpak
 ├── requirements.txt        # Dependências do projeto
 └── README.md               # Documentação

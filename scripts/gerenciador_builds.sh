@@ -16,8 +16,12 @@ limpar_caches() {
     rm -rf build-dir .flatpak-builder
     echo -e "${GREEN}Concluído!${NC}"
 
-    echo -n "🗑️  Removendo diretórios do PyInstaller (.deb) (build, dist, build_deb e .spec)... "
-    rm -rf build dist build_deb *.spec
+    echo -n "🗑️  Removendo arquivos de instalação gerados (.deb, .flatpak e .AppImage)... "
+    rm -f *.deb *.flatpak Backup_Facil_Pro*.AppImage
+    echo -e "${GREEN}Concluído!${NC}"
+
+    echo -n "🗑️  Removendo diretórios do PyInstaller e AppImage (build, dist, build_deb, AppDir e .spec)... "
+    rm -rf build dist build_deb AppDir *.spec
     echo -e "${GREEN}Concluído!${NC}"
 
     echo -n "🗑️  Removendo cache do Python (__pycache__)... "
