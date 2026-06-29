@@ -1,0 +1,122 @@
+{
+  "entries": [
+    {
+      "relPath": "src/logic.py",
+      "language": "py",
+      "symbols": [
+        "get_data_dir",
+        "migrate_old_data_if_needed",
+        "expand_path",
+        "normalize_path_separator",
+        "BackupCancelledException",
+        "toggle_pause_backup",
+        "abort_backup",
+        "save_profiles",
+        "load_profiles",
+        "contract_path",
+        "save_config",
+        "load_config",
+        "save_backup_history",
+        "load_backup_history_nolock",
+        "load_backup_history",
+        "clear_backup_history",
+        "delete_backup_history_entry",
+        "init_incremental_db",
+        "get_file_hash",
+        "is_excluded",
+        "passes_advanced_filters",
+        "get_files_to_backup_incremental",
+        "count_files",
+        "get_disk_space",
+        "check_disk_space_warning",
+        "verify_backup_integrity",
+        "cleanup_old_backups",
+        "compare_backups",
+        "start_backup_process",
+        "get_archive_files",
+        "restore_backup_process",
+        "start_scheduler",
+        "stop_scheduler",
+        "get_dashboard_data",
+        "_get_chunk_hash",
+        "_get_full_hash",
+        "_compare_byte_by_byte",
+        "scan_duplicates",
+        "delete_duplicate_files"
+      ],
+      "imports": [
+        "os",
+        "collections",
+        "sys",
+        "json",
+        "schedule",
+        "time",
+        "threading",
+        "hashlib",
+        "xxhash",
+        "shutil",
+        "sqlite3",
+        "re",
+        "logging",
+        "keyring",
+        "datetime",
+        "py7zr",
+        "plyer",
+        "send2trash"
+      ]
+    },
+    {
+      "relPath": "src/main.py",
+      "language": "py",
+      "symbols": [
+        "get_asset_path",
+        "JanelaPrincipal"
+      ],
+      "imports": [
+        "sys",
+        "os",
+        "PySide6.QtWidgets",
+        "PySide6.QtGui",
+        "PySide6.QtCore",
+        "ui_components"
+      ]
+    },
+    {
+      "relPath": "src/ui_components.py",
+      "language": "py",
+      "symbols": [
+        "TrabalhadorBackup",
+        "TrabalhadorRestauracao",
+        "TrabalhadorComparar",
+        "AbaBackup",
+        "AbaAgendamento",
+        "AbaRestauracao",
+        "AbaLogs",
+        "AbaComparar",
+        "AbaSobre",
+        "AbaDashboard",
+        "TrabalhadorDuplicados",
+        "TrabalhadorRemoverDuplicados",
+        "AbaDuplicados"
+      ],
+      "imports": [
+        "os",
+        "sys",
+        "multiprocessing",
+        "re",
+        "traceback",
+        "PySide6.QtMultimedia",
+        "PySide6.QtCore",
+        "datetime",
+        "PySide6.QtWidgets",
+        "PySide6.QtGui",
+        "logic"
+      ]
+    }
+  ],
+  "totalFiles": 4,
+  "indexedFiles": 3,
+  "method": "regex",
+  "generatedAt": 1782752710798,
+  "merkleRoot": "ed8cc6d566cc32daae1db242e9e65f3572c06799a6bca28e305b654271db9440"
+}

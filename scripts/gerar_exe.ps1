@@ -20,7 +20,7 @@ foreach ($path in $requiredPaths) {
 }
 if ($missingFiles) {
     Write-Host "[X] ERRO: Nao foi possivel encontrar os arquivos base do projeto." -ForegroundColor Red
-    Read-Host -Prompt "Pressione Enter para sair..."
+    if (-not $env:CI) { Read-Host -Prompt "Pressione Enter para sair..." }
     exit
 }
 
@@ -31,7 +31,7 @@ try {
     Write-Host "[i] Python detectado: $pythonVer" -ForegroundColor Green
 } catch {
     Write-Host "[X] ERRO: Python nao esta instalado ou nao foi adicionado as Variaveis de Ambiente (PATH)." -ForegroundColor Red
-    Read-Host -Prompt "Pressione Enter para sair..."
+    if (-not $env:CI) { Read-Host -Prompt "Pressione Enter para sair..." }
     exit
 }
 
@@ -44,7 +44,7 @@ if (-not (Test-Path $pythonExe)) {
     python -m venv venv_win
     if (-not $?) {
         Write-Host "[X] ERRO: Falha ao criar o ambiente virtual. Verifique se o Python esta instalado nas Variaveis de Ambiente." -ForegroundColor Red
-        Read-Host -Prompt "Pressione Enter para sair..."
+        if (-not $env:CI) { Read-Host -Prompt "Pressione Enter para sair..." }
         exit
     }
 }
@@ -54,7 +54,7 @@ Write-Host "`n[i] Instalando/Atualizando dependencias (isso pode levar um minuto
 & $pythonExe -m pip install -r requirements.txt
 if (-not $?) {
     Write-Host "[X] ERRO: Falha ao instalar dependencias do requirements.txt." -ForegroundColor Red
-    Read-Host -Prompt "Pressione Enter para sair..."
+    if (-not $env:CI) { Read-Host -Prompt "Pressione Enter para sair..." }
     exit
 }
 
@@ -87,4 +87,4 @@ Write-Host "`n==========================================" -ForegroundColor Blue
 Write-Host "[OK] SUCESSO ABSOLUTO!" -ForegroundColor Green
 Write-Host "O arquivo $appName.exe esta pronto na pasta 'dist'!" -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Blue
-Read-Host -Prompt "Pressione Enter para sair..."
+if (-not $env:CI) { Read-Host -Prompt "Pressione Enter para sair..." }
