@@ -129,8 +129,8 @@ gerar_flatpak() {
     echo -e "📦 Versão detectada: ${GREEN}v${VERSION}${NC}"
     echo -e "⏳ Iniciando compilação no contêiner..."
 
-    # Compila sem instalar automaticamente
-    flatpak-builder build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean
+    # Compila sem instalar automaticamente e exporta para o diretório 'repo'
+    flatpak-builder --repo=repo build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean
 
     if [ $? -ne 0 ]; then
         echo -e "${YELLOW}⚠️  Erro: Falha ao compilar o Flatpak!${NC}"
@@ -140,7 +140,7 @@ gerar_flatpak() {
     BUNDLE_NAME="Backup_Facil_Pro_v${VERSION}.flatpak"
     echo -e "⏳ Gerando o arquivo instalador final..."
 
-    flatpak build-bundle build-dir "$BUNDLE_NAME" io.github.vagnarok.BackupFacilPro
+    flatpak build-bundle repo "$BUNDLE_NAME" io.github.vagnarok.BackupFacilPro
 
     if [ $? -ne 0 ]; then
         echo -e "${YELLOW}⚠️  Erro: Falha ao gerar o arquivo .flatpak!${NC}"
