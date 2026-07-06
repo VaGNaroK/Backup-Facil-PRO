@@ -130,7 +130,7 @@ gerar_flatpak() {
     echo -e "⏳ Iniciando compilação no contêiner..."
 
     # Compila sem instalar automaticamente e exporta para o diretório 'repo'
-    flatpak-builder --repo=repo build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean
+    flatpak-builder --repo=repo build-dir scripts/io.github.vagnarok.BackupFacilPro.yml --force-clean
 
     if [ $? -ne 0 ]; then
         echo -e "${YELLOW}⚠️  Erro: Falha ao compilar o Flatpak!${NC}"

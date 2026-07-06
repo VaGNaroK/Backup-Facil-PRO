@@ -126,7 +126,7 @@ jobs:
       - name: Build Flatpak
         run: |
           VERSION=$(grep -oP 'APP_VERSION = "\K[^"]+' src/logic.py)
-          flatpak-builder --repo=repo build-dir io.github.vagnarok.BackupFacilPro.yml --force-clean --user --install-deps-from=flathub
+          flatpak-builder --repo=repo build-dir scripts/io.github.vagnarok.BackupFacilPro.yml --force-clean --user --install-deps-from=flathub
           flatpak build-bundle repo Backup_Facil_Pro_v${VERSION}.flatpak io.github.vagnarok.BackupFacilPro
 
       - name: Upload Flatpak Artifact
