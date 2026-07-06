@@ -2,6 +2,9 @@ import os
 from collections import defaultdict
 import sys
 import json
+import random
+import string
+import subprocess
 import schedule
 import time
 import threading
@@ -20,7 +23,7 @@ import send2trash
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.4.2"
+APP_VERSION = "0.4.3"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
@@ -266,6 +269,38 @@ def get_file_hash(filepath):
                 hasher.update(buf); buf = f.read(65536)
         return hasher.hexdigest()
     except (OSError, IOError): return None
+
+def formatar_tamanho(tamanho_em_bytes):
+    for unidade in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if tamanho_em_bytes < 1024.0:
+            return f"{tamanho_em_bytes:.2f} {unidade}"
+        tamanho_em_bytes /= 1024.0
+    return f"{tamanho_em_bytes:.2f} PB"
+
+def calcular_hash_generico(filepath, algoritmo):
+    try:
+        algoritmo = algoritmo.lower()
+        if algoritmo == "xxhash64":
+            hasher = xxhash.xxh64()
+        elif algoritmo == "md5":
+            hasher = hashlib.md5()
+        elif algoritmo == "sha-1":
+            hasher = hashlib.sha1()
+        elif algoritmo == "sha-256":
+            hasher = hashlib.sha256()
+        elif algoritmo == "sha-512":
+            hasher = hashlib.sha512()
+        else:
+            hasher = xxhash.xxh64() # Fallback
+            
+        with open(filepath, 'rb') as f:
+            buf = f.read(65536)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = f.read(65536)
+        return hasher.hexdigest()
+    except (OSError, IOError): 
+        return "Erro de Leitura"
 
 # ==================== FILTROS AVANÇADOS E REGEX ====================
 def is_excluded(filename, exclusions_list):
@@ -863,3 +898,65 @@ def delete_duplicate_files(file_paths, log_cb=None, progress_cb=None):
         if progress_cb:
             progress_cb(int(((idx + 1) / total) * 100))
     return success_count
+
+# ==================== EXCLUSÃO SEGURA ====================
+
+def _rename_to_random(filepath):
+    """Ofusca o nome original renomeando-o para uma string aleatória antes da exclusão"""
+    try:
+        if not os.path.exists(filepath):
+            return filepath
+        dir_name = os.path.dirname(filepath)
+        random_name = ''.join(random.choices(string.ascii_letters + string.digits, k=16)) + ".tmp"
+        new_path = os.path.join(dir_name, random_name)
+        os.rename(filepath, new_path)
+        return new_path
+    except:
+        return filepath
+
+def exclusao_segura_python(filepath, passes):
+    """Fallback Python Multiplataforma para sobrescrita"""
+    try:
+        size = os.path.getsize(filepath)
+        with open(filepath, 'r+b') as f:
+            for p in range(passes):
+                f.seek(0)
+                if p == passes - 1:
+                    # Ultimo passe: Preenche com zeros
+                    chunk = b'\x00' * 65536
+                else:
+                    # Passes intermediários: Bytes aleatórios
+                    chunk = os.urandom(65536)
+                
+                written = 0
+                while written < size:
+                    to_write = min(65536, size - written)
+                    f.write(chunk[:to_write])
+                    written += to_write
+                f.flush()
+                os.fsync(f.fileno())
+                
+        # Ofusca MFT/Journal
+        novo_caminho = _rename_to_random(filepath)
+        os.remove(novo_caminho)
+        return True
+    except Exception as e:
+        logger.error(f"Erro na exclusão segura python de {filepath}: {e}")
+        return False
+
+def excluir_arquivo_seguro(filepath, nivel="padrao"):
+    if not os.path.exists(filepath) or not os.path.isfile(filepath):
+        return False
+        
+    passes_map = {"rapido": 1, "padrao": 3, "paranoia": 7}
+    passes = passes_map.get(nivel.lower(), 3)
+    
+    # Prioriza o utilitário shred (Nativo Linux/macOS) que ignora caches de FS
+    if sys.platform != 'win32' and shutil.which('shred'):
+        try:
+            subprocess.run(['shred', '-u', '-z', '-n', str(passes), filepath], check=True, stderr=subprocess.DEVNULL)
+            return True
+        except subprocess.CalledProcessError:
+            pass # Se falhar por permissão ou montagem, cai pro Python
+            
+    return exclusao_segura_python(filepath, passes)

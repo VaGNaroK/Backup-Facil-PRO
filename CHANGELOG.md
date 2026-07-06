@@ -1,6 +1,18 @@
 📝 Changelog - Backup Fácil Professional
 Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fácil Professional desde o seu início.
 
+## [0.4.3] - 2026-07-06
+
+### Adicionado
+- **Verificar Hash:** Nova ferramenta para auditoria de integridade de arquivos. Calcula hashes em lote usando algoritmos ultrarrápidos (xxHash64) ou criptográficos clássicos (MD5, SHA-1, SHA-256, SHA-512). Suporta escaneamento recursivo de pastas, arrastar-e-soltar, cópia direta via menu de contexto e exportação de laudos para texto (.txt).
+- **Exclusão Segura (Wipe):** Nova ferramenta para destruição permanente de arquivos, impedindo recuperação por software forense. Utiliza nativamente o utilitário \`shred\` em sistemas Linux/macOS ou um algoritmo Python multiplataforma (Windows) que ofusca o arquivo com ruído e renomeia antes da deleção (protegendo a Master File Table). Oferece opções de destruição Padrão, Rápida e Paranoia (7 passes).
+- **Log Global de Tarefas:** Processos executados na Exclusão Segura agora encaminham relatórios e logs diretamente para a aba central de "Logs".
+- **Botão Limpar Lista:** Um botão para limpeza rápida de seleção foi adicionado à interface da aba de "Restauração de Dados".
+- **Dependência Nativa Linux:** Adicionado a exigência explícita do pacote \`coreutils\` na compilação do instalador \`.deb\` visando o suporte absoluto ao comando de exclusão \`shred\`.
+
+### Modificado
+- **Reestruturação de Interface:** Redimensionamento inteligente da largura padrão da janela para acomodar as 10 novas ferramentas simultâneas e reordenação hierárquica das abas. As abas de ferramentas administrativas (Dashboard, Logs, Agendamento) foram remanejadas para depois das ferramentas de segurança ativas (Exclusão Segura, Verificar Hash).
+
 ## [0.4.2] - 2026-06-25
 
 ### Adicionado

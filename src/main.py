@@ -1,9 +1,10 @@
 import sys
 import os
+# pyrefly: ignore [missing-import]
 from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
-from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados
+from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados, AbaVerificarHash, AbaExclusaoSegura
 
 # 🧭 GPS PARA IMAGENS
 def get_asset_path(filename):
@@ -97,7 +98,12 @@ class JanelaPrincipal(QMainWindow):
         if os.path.exists(caminho_icone):
             self.setWindowIcon(QIcon(caminho_icone))
             
-        self.resize(950, 750)
+        self.resize(1350, 750)
+        
+        # Centraliza a janela no meio da tela
+        tela = QApplication.primaryScreen().availableGeometry()
+        tamanho = self.geometry()
+        self.move((tela.width() - tamanho.width()) // 2, (tela.height() - tamanho.height()) // 2)
         
         widget_central = QWidget()
         self.setCentralWidget(widget_central)
@@ -112,19 +118,24 @@ class JanelaPrincipal(QMainWindow):
         self.aba_logs = AbaLogs()
         self.aba_agendamento = AbaAgendamento()
         self.aba_duplicados = AbaDuplicados()
+        self.aba_exclusao_segura = AbaExclusaoSegura()
+        self.aba_verificar_hash = AbaVerificarHash()
         self.aba_sobre = AbaSobre()
 
         # ✅ CONEXÃO MÁGICA: Ligando o sinal de logs da Aba Backup para a Aba Logs
         self.aba_backup.novo_log.connect(self.aba_logs.adicionar_log)
         self.aba_restauracao.novo_log.connect(self.aba_logs.adicionar_log)
+        self.aba_exclusao_segura.novo_log.connect(self.aba_logs.adicionar_log)
 
         self.tabs.addTab(self.aba_backup, "💾 Backup")
         self.tabs.addTab(self.aba_restauracao, "🕒 Restauração")
         self.tabs.addTab(self.aba_comparar, "⚖️ Comparar")
+        self.tabs.addTab(self.aba_duplicados, "🗑️ Remover Duplicados")
+        self.tabs.addTab(self.aba_exclusao_segura, "☢️ Exclusão Segura")
+        self.tabs.addTab(self.aba_verificar_hash, "🔐 Verificar Hash")
         self.tabs.addTab(self.aba_dashboard, "📈 Dashboard")
         self.tabs.addTab(self.aba_logs, "📝 Logs")
         self.tabs.addTab(self.aba_agendamento, "📅 Agendamento")
-        self.tabs.addTab(self.aba_duplicados, "🗑️ Remover Duplicados")
         self.tabs.addTab(self.aba_sobre, "ℹ️ Sobre")
 
         layout_principal.addWidget(self.tabs)

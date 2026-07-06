@@ -103,6 +103,7 @@ Section: utils
 Priority: optional
 Architecture: amd64
 Maintainer: VaGNaroK
+Depends: coreutils
 Description: Ferramenta de desktop robusta para automação, gestão e criptografia de backups locais.
 EOF
 

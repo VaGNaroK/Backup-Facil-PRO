@@ -9,6 +9,8 @@
 - Criptografia e compressão em formato `.7z` utilizando AES-256 (via `py7zr`).
 - Suporte a seleção de arquivos isolados para backup (além de diretórios completos). Arquivos isolados são armazenados diretamente na raiz do contêiner `.7z`.
 - Restauração Seletiva e Interativa: Leitura do conteúdo do `.7z` em memória e extração filtrada de alvos selecionados via checkbox pelo usuário.
+- Módulos de Segurança e Auditoria: `AbaVerificarHash` (auditoria de integridade em lote utilizando algoritmos variados, incluindo otimização xxHash) e `AbaExclusaoSegura` (utilizando GNU shred no Linux/macOS e fallback ofuscado em Python no Windows para Wipe).
+- Hierarquia de Ferramentas de UI: As ferramentas com foco ativo (Backup, Restauração, Comparação, Exclusão Segura, Verificar Hash) antecedem os painéis administrativos (Dashboard, Logs, Agendamento) nas abas.
 - Pipeline de empacotamento: 
   - Linux: Scripts unificados através do menu interativo `gerenciador_builds.sh` (abrangendo Flatpak, DEB e limpeza de cache).
   - Windows: Script PowerShell automatizado que utiliza uma virtual environment independente (`venv_win`) para evitar conflitos de arquitetura e pacotes com desenvolvedores utilizando o WSL.

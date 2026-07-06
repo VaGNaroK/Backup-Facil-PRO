@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QLineEdit, QPushButton, QApplication,
                                QListWidget, QListWidgetItem, QProgressBar, QFileDialog, QFrame, QMessageBox,
                                QTableWidget, QTableWidgetItem, QHeaderView, QComboBox, QTreeWidgetItem, QTreeWidget, 
-                               QCheckBox, QTextEdit, QAbstractItemView)
+                               QCheckBox, QTextEdit, QAbstractItemView, QMenu)
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QTextCursor
 import logic
@@ -652,9 +652,12 @@ class AbaRestauracao(QWidget):
         layout_acoes_lista = QHBoxLayout()
         self.btn_marcar_todos = QPushButton("☑ Marcar Todos")
         self.btn_marcar_todos.clicked.connect(lambda: self.alternar_marcacao(True))
+        self.btn_limpar_lista = QPushButton("🧹 Limpar Lista")
+        self.btn_limpar_lista.clicked.connect(self.lista_arquivos.clear)
         self.btn_desmarcar_todos = QPushButton("☐ Desmarcar Todos")
         self.btn_desmarcar_todos.clicked.connect(lambda: self.alternar_marcacao(False))
         layout_acoes_lista.addWidget(self.btn_marcar_todos)
+        layout_acoes_lista.addWidget(self.btn_limpar_lista)
         layout_acoes_lista.addWidget(self.btn_desmarcar_todos)
         layout_acoes_lista.addStretch()
         layout_principal.addLayout(layout_acoes_lista)
@@ -896,9 +899,14 @@ class AbaComparar(QWidget):
         btn_arq1.clicked.connect(lambda: self.selecionar_arquivo(self.campo_arq1))
         self.senha_arq1 = QLineEdit(placeholderText="Senha (se houver)")
         self.senha_arq1.setEchoMode(QLineEdit.Password)
+        self.senha_arq1.setMaximumWidth(150)
+        btn_limpar_arq1 = QPushButton("🧹 Limpar")
+        btn_limpar_arq1.setCursor(Qt.PointingHandCursor)
+        btn_limpar_arq1.clicked.connect(self.campo_arq1.clear)
         layout_arq1.addWidget(self.campo_arq1, stretch=3)
-        layout_arq1.addWidget(self.senha_arq1, stretch=1)
+        layout_arq1.addWidget(self.senha_arq1)
         layout_arq1.addWidget(btn_arq1)
+        layout_arq1.addWidget(btn_limpar_arq1)
 
         # Seleção do Arquivo 2
         layout_arq2 = QHBoxLayout()
@@ -908,9 +916,14 @@ class AbaComparar(QWidget):
         btn_arq2.clicked.connect(lambda: self.selecionar_arquivo(self.campo_arq2))
         self.senha_arq2 = QLineEdit(placeholderText="Senha (se houver)")
         self.senha_arq2.setEchoMode(QLineEdit.Password)
+        self.senha_arq2.setMaximumWidth(150)
+        btn_limpar_arq2 = QPushButton("🧹 Limpar")
+        btn_limpar_arq2.setCursor(Qt.PointingHandCursor)
+        btn_limpar_arq2.clicked.connect(self.campo_arq2.clear)
         layout_arq2.addWidget(self.campo_arq2, stretch=3)
-        layout_arq2.addWidget(self.senha_arq2, stretch=1)
+        layout_arq2.addWidget(self.senha_arq2)
         layout_arq2.addWidget(btn_arq2)
+        layout_arq2.addWidget(btn_limpar_arq2)
 
         # Botão Comparar
         self.btn_comparar = QPushButton("⚖️ COMPARAR BACKUPS")
@@ -1418,3 +1431,389 @@ class AbaDuplicados(QWidget):
         self.btn_scan.setEnabled(True)
         self.entrada_dir.setText("")
         self.progresso.setValue(100)
+
+# ==================== ABA EXCLUSÃO SEGURA ====================
+class TrabalhadorExclusao(QThread):
+    progresso_sinal = Signal(int)
+    concluido_sinal = Signal(int, int) # (sucessos, falhas)
+
+    def __init__(self, lista_arquivos, nivel):
+        super().__init__()
+        self.lista_arquivos = lista_arquivos
+        self.nivel = nivel
+
+    def run(self):
+        sucessos = 0
+        falhas = 0
+        total = len(self.lista_arquivos)
+        for i, filepath in enumerate(self.lista_arquivos):
+            if logic.excluir_arquivo_seguro(filepath, self.nivel):
+                sucessos += 1
+            else:
+                falhas += 1
+            
+            progresso = int(((i + 1) / total) * 100)
+            self.progresso_sinal.emit(progresso)
+            
+        self.concluido_sinal.emit(sucessos, falhas)
+
+class AbaExclusaoSegura(QWidget):
+    novo_log = Signal(str)
+    def __init__(self):
+        super().__init__()
+        self.setAcceptDrops(True)
+        self.lista_arquivos_pendentes = set()
+        
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+
+        # Cabeçalho
+        titulo = QLabel("☢️ Exclusão Segura (Wipe)")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #c0392b;")
+        desc = QLabel("ATENÇÃO: A destruição nesta aba é IRREVERSÍVEL. Os dados serão sobrescritos impossibilitando a recuperação por ferramentas forenses.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 5px;")
+        
+        aviso_ssd = QLabel("⚠️ Nota: Devido ao Wear Leveling em mídias Flash (SSDs, NVMe e Pen Drives), dados sensíveis podem ser realocados na controladora, o que torna a exclusão segura baseada em software não 100% garantida nesses dispositivos específicos.")
+        aviso_ssd.setWordWrap(True)
+        aviso_ssd.setStyleSheet("color: #f39c12; font-size: 12px; font-style: italic; margin-bottom: 10px;")
+
+        layout.addWidget(titulo)
+        layout.addWidget(desc)
+        layout.addWidget(aviso_ssd)
+
+        # Lista (QTreeWidget)
+        self.tree_resultados = QTreeWidget()
+        self.tree_resultados.setHeaderLabels(["Arquivo para Destruir", "Tamanho"])
+        self.tree_resultados.setColumnWidth(0, 500)
+        layout.addWidget(self.tree_resultados)
+
+        # Controles Inferiores
+        h_controles = QHBoxLayout()
+        
+        self.btn_add_arquivo = QPushButton("📄 Add Arquivo(s)")
+        self.btn_add_arquivo.clicked.connect(self.adicionar_arquivos)
+        
+        self.btn_add_pasta = QPushButton("📁 Add Pasta")
+        self.btn_add_pasta.clicked.connect(self.adicionar_pasta)
+        
+        self.chk_recursivo = QCheckBox("Incluir subpastas")
+        self.chk_recursivo.setChecked(True)
+        
+        self.combo_nivel = QComboBox()
+        self.combo_nivel.addItems(["Padrão (3 passes)", "Rápido (1 passe)", "Paranoia (7 passes)"])
+        
+        self.btn_destruir = QPushButton("☢️ DESTRUIR ARQUIVOS")
+        self.btn_destruir.setStyleSheet("background-color: #c0392b; font-weight: bold; color: white;")
+        self.btn_destruir.clicked.connect(self.destruir_arquivos)
+        
+        self.btn_limpar = QPushButton("🧹 Limpar Lista")
+        self.btn_limpar.clicked.connect(self.limpar_lista)
+        
+        h_controles.addWidget(self.btn_add_arquivo)
+        h_controles.addWidget(self.btn_add_pasta)
+        h_controles.addWidget(self.chk_recursivo)
+        h_controles.addWidget(self.combo_nivel)
+        h_controles.addWidget(self.btn_destruir)
+        h_controles.addWidget(self.btn_limpar)
+        
+        layout.addLayout(h_controles)
+
+        # Progresso
+        self.progresso = QProgressBar()
+        self.progresso.setValue(0)
+        layout.addWidget(self.progresso)
+
+        self.setLayout(layout)
+
+    def _adicionar_paths(self, paths):
+        for p in paths:
+            if os.path.isfile(p):
+                self.lista_arquivos_pendentes.add(p)
+            elif os.path.isdir(p):
+                recursivo = self.chk_recursivo.isChecked()
+                if recursivo:
+                    for root, _, files in os.walk(p):
+                        for f in files:
+                            caminho = os.path.join(root, f)
+                            if os.path.isfile(caminho):
+                                self.lista_arquivos_pendentes.add(caminho)
+                else:
+                    for f in os.listdir(p):
+                        caminho_completo = os.path.join(p, f)
+                        if os.path.isfile(caminho_completo):
+                            self.lista_arquivos_pendentes.add(caminho_completo)
+        self.atualizar_lista_visual()
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        paths = [url.toLocalFile() for url in event.mimeData().urls()]
+        self._adicionar_paths(paths)
+
+    def adicionar_arquivos(self):
+        arquivos, _ = QFileDialog.getOpenFileNames(self, "Selecionar Arquivos para Destruir")
+        if arquivos:
+            self._adicionar_paths(arquivos)
+
+    def adicionar_pasta(self):
+        pasta = QFileDialog.getExistingDirectory(self, "Selecionar Pasta")
+        if pasta:
+            self._adicionar_paths([pasta])
+            
+    def limpar_lista(self):
+        self.lista_arquivos_pendentes.clear()
+        self.tree_resultados.clear()
+        self.progresso.setValue(0)
+
+    def atualizar_lista_visual(self):
+        self.tree_resultados.clear()
+        for p in sorted(self.lista_arquivos_pendentes):
+            item = QTreeWidgetItem(self.tree_resultados)
+            item.setText(0, p)
+            if os.path.exists(p):
+                item.setText(1, logic.formatar_tamanho(os.path.getsize(p)))
+
+    def destruir_arquivos(self):
+        if not self.lista_arquivos_pendentes:
+            QMessageBox.warning(self, "Aviso", "Nenhum arquivo na lista para destruir.")
+            return
+            
+        confirmacao = QMessageBox.critical(self, "Confirmação de Destruição",
+            f"Você tem ABSOLUTA CERTEZA que deseja DESTRUIR {len(self.lista_arquivos_pendentes)} arquivos de forma irreversível?\n\nIsso irá sobrescrever os dados em múltiplas camadas.",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            
+        if confirmacao == QMessageBox.StandardButton.Yes:
+            self.btn_destruir.setEnabled(False)
+            self.progresso.setValue(0)
+            
+            lista = sorted(list(self.lista_arquivos_pendentes))
+            # Extrai apenas a primeira palavra ("Padrão", "Rápido", "Paranoia")
+            nivel = self.combo_nivel.currentText().split()[0].lower()
+            
+            self.novo_log.emit(f"☢️ Iniciando exclusão segura ({nivel}) de {len(lista)} arquivo(s)...")
+            
+            self.trabalhador = TrabalhadorExclusao(lista, nivel)
+            self.trabalhador.progresso_sinal.connect(self.progresso.setValue)
+            self.trabalhador.concluido_sinal.connect(self.exibir_resultados)
+            self.trabalhador.start()
+
+    def exibir_resultados(self, sucessos, falhas):
+        self.lista_arquivos_pendentes.clear()
+        self.tree_resultados.clear()
+        self.btn_destruir.setEnabled(True)
+        self.progresso.setValue(100)
+        
+        msg = f"Operação concluída!\nArquivos destruídos com sucesso: {sucessos}"
+        self.novo_log.emit(f"✅ Exclusão segura finalizada. {sucessos} destruídos, {falhas} falhas.")
+        if falhas > 0:
+            msg += f"\nFalhas (não encontrados ou permissão negada): {falhas}"
+            QMessageBox.warning(self, "Aviso Parcial", msg)
+        else:
+            QMessageBox.information(self, "Concluído", msg)
+
+# ==================== ABA VERIFICAR HASH ====================
+class TrabalhadorHash(QThread):
+    progresso_sinal = Signal(int)
+    resultado_sinal = Signal(list)
+
+    def __init__(self, lista_arquivos, algoritmo):
+        super().__init__()
+        self.lista_arquivos = lista_arquivos
+        self.algoritmo = algoritmo
+
+    def run(self):
+        resultados = []
+        total = len(self.lista_arquivos)
+        for i, filepath in enumerate(self.lista_arquivos):
+            tamanho = logic.formatar_tamanho(os.path.getsize(filepath)) if os.path.exists(filepath) else "N/A"
+            hash_calc = logic.calcular_hash_generico(filepath, self.algoritmo)
+            resultados.append((filepath, tamanho, hash_calc))
+            
+            progresso = int(((i + 1) / total) * 100)
+            self.progresso_sinal.emit(progresso)
+            
+        self.resultado_sinal.emit(resultados)
+
+class AbaVerificarHash(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setAcceptDrops(True)
+        self.lista_arquivos_pendentes = set()
+        
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+
+        # Cabeçalho
+        titulo = QLabel("🔐 Verificar Hash de Arquivos")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #2980b9;")
+        desc = QLabel("Arraste arquivos/pastas para a lista ou use os botões abaixo. Selecione o algoritmo e clique em Calcular.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+
+        layout.addWidget(titulo)
+        layout.addWidget(desc)
+
+        # Lista (QTreeWidget)
+        self.tree_resultados = QTreeWidget()
+        self.tree_resultados.setHeaderLabels(["Arquivo", "Tamanho", "Hash"])
+        self.tree_resultados.setColumnWidth(0, 400)
+        self.tree_resultados.setColumnWidth(1, 100)
+        self.tree_resultados.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_resultados.customContextMenuRequested.connect(self.mostrar_menu_contexto)
+        layout.addWidget(self.tree_resultados)
+
+        # Controles Inferiores
+        h_controles = QHBoxLayout()
+        
+        self.btn_add_arquivo = QPushButton("📄 Add Arquivo(s)")
+        self.btn_add_arquivo.clicked.connect(self.adicionar_arquivos)
+        
+        self.btn_add_pasta = QPushButton("📁 Add Pasta")
+        self.btn_add_pasta.clicked.connect(self.adicionar_pasta)
+        
+        self.chk_recursivo = QCheckBox("Incluir subpastas")
+        self.chk_recursivo.setChecked(True)
+        
+        self.combo_algo = QComboBox()
+        self.combo_algo.addItems(["xxHash64", "MD5", "SHA-1", "SHA-256", "SHA-512"])
+        
+        self.btn_calcular = QPushButton("⚡ Calcular")
+        self.btn_calcular.setStyleSheet("background-color: #2980b9; font-weight: bold;")
+        self.btn_calcular.clicked.connect(self.calcular_hashes)
+        
+        self.btn_salvar = QPushButton("💾 Salvar em TXT")
+        self.btn_salvar.clicked.connect(self.salvar_txt)
+        
+        self.btn_limpar = QPushButton("🧹 Limpar Lista")
+        self.btn_limpar.clicked.connect(self.limpar_lista)
+        
+        h_controles.addWidget(self.btn_add_arquivo)
+        h_controles.addWidget(self.btn_add_pasta)
+        h_controles.addWidget(self.chk_recursivo)
+        h_controles.addWidget(self.combo_algo)
+        h_controles.addWidget(self.btn_calcular)
+        h_controles.addWidget(self.btn_salvar)
+        h_controles.addWidget(self.btn_limpar)
+        
+        layout.addLayout(h_controles)
+
+        # Progresso
+        self.progresso = QProgressBar()
+        self.progresso.setValue(0)
+        layout.addWidget(self.progresso)
+
+        self.setLayout(layout)
+
+    def _adicionar_paths(self, paths):
+        for p in paths:
+            if os.path.isfile(p):
+                self.lista_arquivos_pendentes.add(p)
+            elif os.path.isdir(p):
+                recursivo = self.chk_recursivo.isChecked()
+                if recursivo:
+                    for root, _, files in os.walk(p):
+                        for f in files:
+                            caminho = os.path.join(root, f)
+                            if os.path.isfile(caminho):
+                                self.lista_arquivos_pendentes.add(caminho)
+                else:
+                    for f in os.listdir(p):
+                        caminho_completo = os.path.join(p, f)
+                        if os.path.isfile(caminho_completo):
+                            self.lista_arquivos_pendentes.add(caminho_completo)
+        self.atualizar_lista_visual()
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        paths = [url.toLocalFile() for url in event.mimeData().urls()]
+        self._adicionar_paths(paths)
+
+    def adicionar_arquivos(self):
+        arquivos, _ = QFileDialog.getOpenFileNames(self, "Selecionar Arquivos")
+        if arquivos:
+            self._adicionar_paths(arquivos)
+
+    def adicionar_pasta(self):
+        pasta = QFileDialog.getExistingDirectory(self, "Selecionar Pasta")
+        if pasta:
+            self._adicionar_paths([pasta])
+            
+    def limpar_lista(self):
+        self.lista_arquivos_pendentes.clear()
+        self.tree_resultados.clear()
+        self.progresso.setValue(0)
+
+    def atualizar_lista_visual(self):
+        self.tree_resultados.clear()
+        for p in sorted(self.lista_arquivos_pendentes):
+            item = QTreeWidgetItem(self.tree_resultados)
+            item.setText(0, p)
+            if os.path.exists(p):
+                item.setText(1, logic.formatar_tamanho(os.path.getsize(p)))
+            item.setText(2, "Pendente...")
+
+    def mostrar_menu_contexto(self, pos):
+        item = self.tree_resultados.itemAt(pos)
+        if item:
+            menu = QMenu(self)
+            acao_copiar = menu.addAction("Copiar Hash")
+            acao_copiada = menu.exec(self.tree_resultados.mapToGlobal(pos))
+            if acao_copiada == acao_copiar:
+                hash_text = item.text(2)
+                if hash_text and hash_text != "Calculando...":
+                    QApplication.clipboard().setText(hash_text)
+
+    def calcular_hashes(self):
+        if not self.lista_arquivos_pendentes:
+            QMessageBox.warning(self, "Aviso", "Nenhum arquivo na lista para calcular.")
+            return
+            
+        self.btn_calcular.setEnabled(False)
+        self.progresso.setValue(0)
+        
+        lista = sorted(list(self.lista_arquivos_pendentes))
+        algo = self.combo_algo.currentText()
+        
+        self.trabalhador = TrabalhadorHash(lista, algo)
+        self.trabalhador.progresso_sinal.connect(self.progresso.setValue)
+        self.trabalhador.resultado_sinal.connect(self.exibir_resultados)
+        self.trabalhador.start()
+
+    def exibir_resultados(self, resultados):
+        self.tree_resultados.clear()
+        for filepath, tamanho, hash_calc in resultados:
+            item = QTreeWidgetItem(self.tree_resultados)
+            item.setText(0, filepath)
+            item.setText(1, tamanho)
+            item.setText(2, hash_calc)
+        
+        self.btn_calcular.setEnabled(True)
+        QMessageBox.information(self, "Concluído", "Cálculo de hashes finalizado!")
+
+    def salvar_txt(self):
+        if self.tree_resultados.topLevelItemCount() == 0:
+            QMessageBox.warning(self, "Aviso", "A lista está vazia.")
+            return
+            
+        caminho, _ = QFileDialog.getSaveFileName(self, "Salvar Hashes", "", "Text Files (*.txt)")
+        if caminho:
+            try:
+                with open(caminho, 'w', encoding='utf-8') as f:
+                    algo = self.combo_algo.currentText()
+                    f.write(f"Relatório de Hashes ({algo})\n")
+                    f.write("="*50 + "\n\n")
+                    for i in range(self.tree_resultados.topLevelItemCount()):
+                        item = self.tree_resultados.topLevelItem(i)
+                        f.write(f"Arquivo: {item.text(0)}\n")
+                        f.write(f"Tamanho: {item.text(1)}\n")
+                        f.write(f"Hash:    {item.text(2)}\n")
+                        f.write("-"  * 40 + "\n")
+                QMessageBox.information(self, "Sucesso", "Arquivo salvo com sucesso!")
+            except Exception as e:
+                QMessageBox.critical(self, "Erro", f"Erro ao salvar arquivo: {e}")
