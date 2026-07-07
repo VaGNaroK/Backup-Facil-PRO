@@ -1,0 +1,183 @@
+Run VERSION=$(grep -oP 'APP_VERSION = "\K[^"]+' src/logic.py)
+Dependency Sdk: org.kde.Sdk 6.8
+Installing org.kde.Sdk/x86_64/6.8 from flathub
+Info: org.kde.Sdk is end-of-life, with reason: We strongly recommend moving to the latest stable version of the Platform and SDK
+Info: org.kde.Sdk.Locale is end-of-life, with reason: We strongly recommend moving to the latest stable version of the Platform and SDK
+Installing runtime/org.freedesktop.Platform.GL.default/x86_64/24.08
+Installing runtime/org.freedesktop.Platform.GL.default/x86_64/24.08extra
+Installing runtime/org.freedesktop.Platform.openh264/x86_64/2.5.1
+Installing runtime/org.kde.KStyle.Adwaita/x86_64/6.8
+Installing runtime/org.kde.Sdk.Locale/x86_64/6.8
+Installing runtime/org.kde.Sdk/x86_64/6.8
+Dependency Runtime: org.kde.Platform 6.8
+Installing org.kde.Platform/x86_64/6.8 from flathub
+Info: org.kde.Platform is end-of-life, with reason: We strongly recommend moving to the latest stable version of the Platform and SDK
+Info: org.kde.Platform.Locale is end-of-life, with reason: We strongly recommend moving to the latest stable version of the Platform and SDK
+Installing runtime/org.kde.Platform.Locale/x86_64/6.8
+Installing runtime/org.kde.Platform/x86_64/6.8
+Downloading sources
+Downloading https://kerberos.org/dist/krb5/1.21/krb5-1.21.3.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+ 61 8922k   61 5520k    0     0  4356k      0  0:00:02  0:00:01  0:00:01 4356k
+100 8922k  100 8922k    0     0  6675k      0  0:00:01  0:00:01 --:--:-- 6673k
+Initializing build dir
+Committing stage init to cache
+Starting build of io.github.vagnarok.BackupFacilPro
+========================================================================
+Building module mit-krb5 in /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/build/mit-krb5-1
+========================================================================
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to enable C11 features... none needed
+checking for g++... g++
+checking whether the compiler supports GNU C++... yes
+checking whether g++ accepts -g... yes
+checking for g++ option to enable C++11 features... none needed
+[29] .debug_aranges compressed -> .zdebug_aranges (1024 => 281 27.44%)
+[30] .debug_info compressed -> .zdebug_info (51840 => 25775 49.72%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (12372 => 3192 25.80%)
+[32] .debug_line compressed -> .zdebug_line (24004 => 10330 43.03%)
+[33] .debug_str compressed -> .zdebug_str (7457 => 2925 39.22%)
+[34] .debug_line_str compressed -> .zdebug_line_str (956 => 475 49.69%)
+[35] .debug_loclists compressed -> .zdebug_loclists (25567 => 11508 45.01%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (2881 => 1751 60.78%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrb5support.so.0.1 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkrb5support.so.0.1.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libcom_err.so.3.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libcom_err.so.3.0
+[28] .debug_aranges compressed -> .zdebug_aranges (320 => 118 36.88%)
+[29] .debug_info compressed -> .zdebug_info (11785 => 5575 47.31%)
+[30] .debug_abbrev compressed -> .zdebug_abbrev (2595 => 934 35.99%)
+[31] .debug_line compressed -> .zdebug_line (4100 => 1819 44.37%)
+[32] .debug_str compressed -> .zdebug_str (2480 => 1193 48.10%)
+[33] .debug_line_str compressed -> .zdebug_line_str (580 => 300 51.72%)
+[34] .debug_loclists compressed -> .zdebug_loclists (5059 => 1997 39.47%)
+[35] .debug_rnglists compressed -> .zdebug_rnglists (926 => 468 50.54%)
+[38] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libcom_err.so.3.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libcom_err.so.3.0.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libverto.so.0.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libverto.so.0.0
+[29] .debug_aranges compressed -> .zdebug_aranges (352 => 137 38.92%)
+[30] .debug_info compressed -> .zdebug_info (36382 => 18777 51.61%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (3789 => 1349 35.60%)
+[32] .debug_line compressed -> .zdebug_line (17572 => 8536 48.58%)
+[33] .debug_str compressed -> .zdebug_str (6280 => 2815 44.82%)
+[34] .debug_line_str compressed -> .zdebug_line_str (701 => 358 51.07%)
+[35] .debug_loclists compressed -> .zdebug_loclists (17501 => 7836 44.77%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (2670 => 1448 54.23%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libverto.so.0.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libverto.so.0.0.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libk5crypto.so.3.1
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libk5crypto.so.3.1
+[29] .debug_aranges compressed -> .zdebug_aranges (4576 => 1005 21.96%)
+[30] .debug_info compressed -> .zdebug_info (279209 => 122627 43.92%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (57998 => 10159 17.52%)
+[32] .debug_line compressed -> .zdebug_line (89414 => 33817 37.82%)
+[33] .debug_str compressed -> .zdebug_str (11229 => 4194 37.35%)
+[34] .debug_line_str compressed -> .zdebug_line_str (2458 => 808 32.87%)
+[35] .debug_loclists compressed -> .zdebug_loclists (209513 => 63163 30.15%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (8156 => 4502 55.20%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libk5crypto.so.3.1 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libk5crypto.so.3.1.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrb5.so.3.3
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrb5.so.3.3
+[29] .debug_aranges compressed -> .zdebug_aranges (10176 => 2142 21.05%)
+[30] .debug_info compressed -> .zdebug_info (1325470 => 641185 48.37%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (170713 => 30628 17.94%)
+[32] .debug_line compressed -> .zdebug_line (343734 => 146523 42.63%)
+[33] .debug_str compressed -> .zdebug_str (122465 => 32118 26.23%)
+[34] .debug_line_str compressed -> .zdebug_line_str (4587 => 1780 38.81%)
+[35] .debug_loclists compressed -> .zdebug_loclists (441099 => 195940 44.42%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (30134 => 19763 65.58%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrb5.so.3.3 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkrb5.so.3.3.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssapi_krb5.so.2.2
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssapi_krb5.so.2.2
+[29] .debug_aranges compressed -> .zdebug_aranges (6512 => 1424 21.87%)
+[30] .debug_info compressed -> .zdebug_info (968869 => 406263 41.93%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (94605 => 16749 17.70%)
+[32] .debug_line compressed -> .zdebug_line (216271 => 86895 40.18%)
+[33] .debug_str compressed -> .zdebug_str (40020 => 13160 32.88%)
+[34] .debug_line_str compressed -> .zdebug_line_str (2986 => 1083 36.27%)
+[35] .debug_loclists compressed -> .zdebug_loclists (328576 => 138781 42.24%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (23171 => 13388 57.78%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssapi_krb5.so.2.2 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libgssapi_krb5.so.2.2.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssrpc.so.4.2
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssrpc.so.4.2
+[29] .debug_aranges compressed -> .zdebug_aranges (2496 => 648 25.96%)
+[30] .debug_info compressed -> .zdebug_info (207222 => 101004 48.74%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (37139 => 7683 20.69%)
+[32] .debug_line compressed -> .zdebug_line (59097 => 27035 45.75%)
+[33] .debug_str compressed -> .zdebug_str (20771 => 7834 37.72%)
+[34] .debug_line_str compressed -> .zdebug_line_str (1447 => 616 42.57%)
+[35] .debug_loclists compressed -> .zdebug_loclists (53158 => 25059 47.14%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (3973 => 2625 66.07%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libgssrpc.so.4.2 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libgssrpc.so.4.2.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkdb5.so.10.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkdb5.so.10.0
+[29] .debug_aranges compressed -> .zdebug_aranges (624 => 193 30.93%)
+[30] .debug_info compressed -> .zdebug_info (114449 => 60669 53.01%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (11307 => 3002 26.55%)
+[32] .debug_line compressed -> .zdebug_line (37292 => 17451 46.80%)
+[33] .debug_str compressed -> .zdebug_str (17660 => 6976 39.50%)
+[34] .debug_line_str compressed -> .zdebug_line_str (1012 => 461 45.55%)
+[35] .debug_loclists compressed -> .zdebug_loclists (58357 => 24418 41.84%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (3394 => 2072 61.05%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkdb5.so.10.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkdb5.so.10.0.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5clnt_mit.so.12.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5clnt_mit.so.12.0
+[29] .debug_aranges compressed -> .zdebug_aranges (800 => 227 28.38%)
+[30] .debug_info compressed -> .zdebug_info (109202 => 55179 50.53%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (11633 => 2905 24.97%)
+[32] .debug_line compressed -> .zdebug_line (35457 => 13533 38.17%)
+[33] .debug_str compressed -> .zdebug_str (13461 => 5429 40.33%)
+[34] .debug_line_str compressed -> .zdebug_line_str (1239 => 544 43.91%)
+[35] .debug_loclists compressed -> .zdebug_loclists (37944 => 16283 42.91%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (2692 => 2130 79.12%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5clnt_mit.so.12.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkadm5clnt_mit.so.12.0.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5srv_mit.so.12.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5srv_mit.so.12.0
+[29] .debug_aranges compressed -> .zdebug_aranges (1184 => 321 27.11%)
+[30] .debug_info compressed -> .zdebug_info (136089 => 68818 50.57%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (18095 => 4128 22.81%)
+[32] .debug_line compressed -> .zdebug_line (51875 => 21819 42.06%)
+[33] .debug_str compressed -> .zdebug_str (13864 => 5355 38.63%)
+[34] .debug_line_str compressed -> .zdebug_line_str (1285 => 567 44.12%)
+[35] .debug_loclists compressed -> .zdebug_loclists (59309 => 25810 43.52%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (3631 => 2842 78.27%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkadm5srv_mit.so.12.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkadm5srv_mit.so.12.0.debug
+compressing debuginfo in: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrad.so.0.0
+processing: /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrad.so.0.0
+[29] .debug_aranges compressed -> .zdebug_aranges (416 => 136 32.69%)
+[30] .debug_info compressed -> .zdebug_info (34667 => 18818 54.28%)
+[31] .debug_abbrev compressed -> .zdebug_abbrev (6917 => 1876 27.12%)
+[32] .debug_line compressed -> .zdebug_line (12432 => 6083 48.93%)
+[33] .debug_str compressed -> .zdebug_str (4788 => 2083 43.50%)
+[34] .debug_line_str compressed -> .zdebug_line_str (639 => 332 51.96%)
+[35] .debug_loclists compressed -> .zdebug_loclists (14968 => 7019 46.89%)
+[36] .debug_rnglists compressed -> .zdebug_rnglists (1503 => 1074 71.46%)
+[39] Updating section string table
+stripping /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/libkrad.so.0.0 to /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/rofiles/rofiles-4oGB7W/files/lib/debug/lib/libkrad.so.0.0.debug
+Committing stage build-mit-krb5 to cache
+========================================================================
+Building module backup-facil-pro in /home/runner/work/Backup-Facil-PRO/Backup-Facil-PRO/.flatpak-builder/build/backup-facil-pro-1
+========================================================================
+Running: pip3 install --prefix=/app -r requirements.txt
+ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
+Error: module backup-facil-pro: Child process exited with code 1
+Error: Process completed with exit code 1.

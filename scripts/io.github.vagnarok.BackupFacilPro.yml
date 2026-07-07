@@ -65,4 +65,4 @@ modules:
         EOF
     sources:
       - type: dir
-        path: .
+        path: ..
