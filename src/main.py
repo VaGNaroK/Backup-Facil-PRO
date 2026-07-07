@@ -4,7 +4,7 @@ import os
 from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
-from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados, AbaVerificarHash, AbaExclusaoSegura
+from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados, AbaVerificarHash, AbaExclusaoSegura, AbaRecuperacaoDados
 
 # 🧭 GPS PARA IMAGENS
 def get_asset_path(filename):
@@ -114,6 +114,7 @@ class JanelaPrincipal(QMainWindow):
         self.aba_backup = AbaBackup()
         self.aba_restauracao = AbaRestauracao()
         self.aba_comparar = AbaComparar()
+        self.aba_recuperacao = AbaRecuperacaoDados()
         self.aba_dashboard = AbaDashboard()
         self.aba_logs = AbaLogs()
         self.aba_agendamento = AbaAgendamento()
@@ -125,11 +126,13 @@ class JanelaPrincipal(QMainWindow):
         # ✅ CONEXÃO MÁGICA: Ligando o sinal de logs da Aba Backup para a Aba Logs
         self.aba_backup.novo_log.connect(self.aba_logs.adicionar_log)
         self.aba_restauracao.novo_log.connect(self.aba_logs.adicionar_log)
+        self.aba_recuperacao.novo_log.connect(self.aba_logs.adicionar_log)
         self.aba_exclusao_segura.novo_log.connect(self.aba_logs.adicionar_log)
 
         self.tabs.addTab(self.aba_backup, "💾 Backup")
         self.tabs.addTab(self.aba_restauracao, "🕒 Restauração")
         self.tabs.addTab(self.aba_comparar, "⚖️ Comparar")
+        self.tabs.addTab(self.aba_recuperacao, "🕵️ Recuperação Forense")
         self.tabs.addTab(self.aba_duplicados, "🗑️ Remover Duplicados")
         self.tabs.addTab(self.aba_exclusao_segura, "☢️ Exclusão Segura")
         self.tabs.addTab(self.aba_verificar_hash, "🔐 Verificar Hash")

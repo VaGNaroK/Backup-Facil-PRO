@@ -1,4 +1,5 @@
 import os
+import forensics
 import sys
 import multiprocessing
 import re
@@ -1817,3 +1818,183 @@ class AbaVerificarHash(QWidget):
                 QMessageBox.information(self, "Sucesso", "Arquivo salvo com sucesso!")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao salvar arquivo: {e}")
+
+class TrabalhadorCarving(QThread):
+    progresso = Signal(str)
+    concluido = Signal(bool)
+    
+    def __init__(self, alvo, destino):
+        super().__init__()
+        self.alvo = alvo
+        self.destino = destino
+
+    def run(self):
+        try:
+            def on_log(msg):
+                self.progresso.emit(msg)
+            
+            sucesso = forensics.executar_photorec(self.alvo, self.destino, callback_log=on_log)
+            self.concluido.emit(sucesso)
+        except Exception as e:
+            self.progresso.emit(f"Erro Crítico no Worker: {str(e)}")
+            self.concluido.emit(False)
+
+class AbaRecuperacaoDados(QWidget):
+    novo_log = Signal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.setup_ui()
+        self.worker = None
+
+    def setup_ui(self):
+        layout_principal = QVBoxLayout(self)
+        layout_principal.setSpacing(15)
+        layout_principal.setContentsMargins(20, 20, 20, 20)
+
+        # Cabeçalho
+        titulo = QLabel("🕵️ Recuperação Forense de Dados")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: #e67e22;")
+        desc = QLabel("Recupere arquivos apagados utilizando técnicas de File Carving (PhotoRec).\nAviso: Esta operação é lenta e requer leitura de baixo nível no disco.")
+        desc.setWordWrap(True)
+        desc.setStyleSheet("color: #a0a0a0; font-size: 13px; margin-bottom: 10px;")
+        layout_principal.addWidget(titulo)
+        layout_principal.addWidget(desc)
+
+        if not forensics.is_admin_or_root():
+            lbl_aviso_admin = QLabel("⚠️ ATENÇÃO: O aplicativo não está rodando como Administrador/Root.\nVocê só poderá fazer escaneamento de arquivos de Imagem (.dd, .img) e não de Discos Físicos.")
+            lbl_aviso_admin.setStyleSheet("color: #e74c3c; font-weight: bold; padding: 10px; border: 1px solid #e74c3c; border-radius: 5px;")
+            layout_principal.addWidget(lbl_aviso_admin)
+
+        if not forensics.verificar_dependencias_forenses():
+            lbl_aviso_dep = QLabel("❌ ATENÇÃO: Ferramenta 'photorec' não encontrada. A recuperação profunda não funcionará.\nInstale o testdisk no Linux ou baixe o photorec_win.exe no Windows.")
+            lbl_aviso_dep.setStyleSheet("color: #e74c3c; font-weight: bold; padding: 10px; border: 1px solid #e74c3c; border-radius: 5px;")
+            layout_principal.addWidget(lbl_aviso_dep)
+
+        # Seleção de Alvo
+        frame_alvo = QFrame()
+        frame_alvo.setStyleSheet("QFrame { border: 1px solid #333333; border-radius: 8px; background-color: #1e1e1e; }")
+        layout_alvo = QVBoxLayout(frame_alvo)
+        
+        lbl_alvo = QLabel("1. Selecione o Alvo (Disco Físico ou Imagem de Disco):")
+        lbl_alvo.setStyleSheet("font-weight: bold; border: none; background: transparent;")
+        layout_alvo.addWidget(lbl_alvo)
+
+        # Dropdown para discos físicos
+        self.combo_discos = QComboBox()
+        self.combo_discos.addItem("Selecione um Disco Físico...")
+        discos = forensics.listar_discos_fisicos()
+        for d in discos:
+            self.combo_discos.addItem(f"{d['path']} - {d['description']}", userData=d['path'])
+        
+        layout_alvo.addWidget(self.combo_discos)
+
+        # Seleção de Imagem Manual
+        layout_img = QHBoxLayout()
+        self.campo_imagem = QLineEdit(placeholderText="Ou selecione um arquivo de Imagem de Disco (.dd, .img, .iso)")
+        self.campo_imagem.setStyleSheet("background-color: #2b2b2b; border: 1px solid #444;")
+        btn_procurar_img = QPushButton("🔍 Procurar Imagem")
+        btn_procurar_img.setCursor(Qt.PointingHandCursor)
+        btn_procurar_img.clicked.connect(self.selecionar_imagem)
+        layout_img.addWidget(self.campo_imagem)
+        layout_img.addWidget(btn_procurar_img)
+        layout_alvo.addLayout(layout_img)
+
+        layout_principal.addWidget(frame_alvo)
+
+        # Seleção de Destino
+        frame_destino = QFrame()
+        frame_destino.setStyleSheet("QFrame { border: 1px solid #333333; border-radius: 8px; background-color: #1e1e1e; }")
+        layout_destino = QVBoxLayout(frame_destino)
+        
+        lbl_destino = QLabel("2. Selecione a Pasta de Destino (NÃO salve no mesmo disco que está recuperando!):")
+        lbl_destino.setStyleSheet("font-weight: bold; border: none; background: transparent;")
+        layout_destino.addWidget(lbl_destino)
+
+        layout_dest_btn = QHBoxLayout()
+        self.campo_destino = QLineEdit(placeholderText="Pasta onde os arquivos recuperados serão salvos...")
+        self.campo_destino.setStyleSheet("background-color: #2b2b2b; border: 1px solid #444;")
+        btn_procurar_dest = QPushButton("📂 Selecionar Pasta")
+        btn_procurar_dest.setCursor(Qt.PointingHandCursor)
+        btn_procurar_dest.clicked.connect(self.selecionar_destino)
+        layout_dest_btn.addWidget(self.campo_destino)
+        layout_dest_btn.addWidget(btn_procurar_dest)
+        layout_destino.addLayout(layout_dest_btn)
+
+        layout_principal.addWidget(frame_destino)
+
+        # Console Log
+        self.log_console = QTextEdit()
+        self.log_console.setReadOnly(True)
+        self.log_console.setStyleSheet("background-color: #0f0f0f; color: #00ff00; font-family: monospace; border: 1px solid #333;")
+        layout_principal.addWidget(self.log_console)
+
+        # Botão de Executar
+        self.btn_iniciar = QPushButton("🚀 INICIAR RECUPERAÇÃO PROFUNDA (FILE CARVING)")
+        self.btn_iniciar.setCursor(Qt.PointingHandCursor)
+        self.btn_iniciar.setStyleSheet("""
+            QPushButton {
+                background-color: #e67e22; color: white; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px;
+            }
+            QPushButton:hover { background-color: #d35400; }
+            QPushButton:disabled { background-color: #555555; color: #888888; }
+        """)
+        self.btn_iniciar.clicked.connect(self.iniciar_recuperacao)
+        layout_principal.addWidget(self.btn_iniciar)
+
+    def selecionar_imagem(self):
+        caminho, _ = QFileDialog.getOpenFileName(self, "Selecionar Imagem de Disco", "", "Disk Images (*.dd *.img *.iso);;All Files (*)")
+        if caminho:
+            self.campo_imagem.setText(caminho)
+            self.combo_discos.setCurrentIndex(0) # Reseta o combobox se escolheu imagem
+
+    def selecionar_destino(self):
+        pasta = QFileDialog.getExistingDirectory(self, "Selecionar Pasta de Destino")
+        if pasta:
+            self.campo_destino.setText(pasta)
+
+    def print_log(self, msg):
+        self.log_console.append(msg)
+        self.log_console.moveCursor(QTextCursor.End)
+        self.novo_log.emit(f"[FORENSE] {msg}")
+
+    def iniciar_recuperacao(self):
+        # Determinar alvo
+        alvo = ""
+        if self.campo_imagem.text().strip():
+            alvo = self.campo_imagem.text().strip()
+        elif self.combo_discos.currentIndex() > 0:
+            alvo = self.combo_discos.currentData()
+            
+        destino = self.campo_destino.text().strip()
+
+        if not alvo:
+            QMessageBox.warning(self, "Aviso", "Selecione um Disco Físico ou um Arquivo de Imagem para recuperar.")
+            return
+            
+        if not destino:
+            QMessageBox.warning(self, "Aviso", "Selecione a pasta de destino para os arquivos recuperados.")
+            return
+
+        aviso = QMessageBox.question(self, "Aviso de Segurança", 
+                                     "Tem certeza que a pasta de destino NÃO está no mesmo disco do qual você está recuperando dados?\nIsso pode sobrescrever e destruir seus próprios arquivos perdidos permanentemente.",
+                                     QMessageBox.Yes | QMessageBox.No)
+        
+        if aviso != QMessageBox.Yes:
+            return
+
+        self.btn_iniciar.setEnabled(False)
+        self.log_console.clear()
+        self.print_log("Preparando ambiente para recuperação...")
+
+        self.worker = TrabalhadorCarving(alvo, destino)
+        self.worker.progresso.connect(self.print_log)
+        self.worker.concluido.connect(self.recuperacao_finalizada)
+        self.worker.start()
+
+    def recuperacao_finalizada(self, sucesso):
+        self.btn_iniciar.setEnabled(True)
+        if sucesso:
+            QMessageBox.information(self, "Concluído", "Varredura profunda concluída com sucesso! Cheque o console para detalhes e a pasta de destino.")
+        else:
+            QMessageBox.warning(self, "Aviso", "A varredura encontrou erros ou foi cancelada. Cheque os logs.")
