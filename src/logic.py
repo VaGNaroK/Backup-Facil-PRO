@@ -23,7 +23,7 @@ import send2trash
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.4.3"
+APP_VERSION = "0.4.3-hotfix"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
