@@ -62,7 +62,7 @@ jobs:
         run: |
           source venv/bin/activate
           python -m PyInstaller --noconsole --onefile --name "Backup_Facil_Pro" \
-            --icon="assets/icons/icon.png" \
+            --icon="assets/icons/icon.svg" \
             --add-data "assets:assets" \
             --hidden-import=plyer.platforms.linux.notification \
             --paths "src" \
@@ -75,11 +75,11 @@ jobs:
           mkdir -p $BUILD_DIR/DEBIAN
           mkdir -p $BUILD_DIR/usr/bin
           mkdir -p $BUILD_DIR/usr/share/applications
-          mkdir -p $BUILD_DIR/usr/share/icons/hicolor/256x256/apps
+          mkdir -p $BUILD_DIR/usr/share/icons/hicolor/scalable/apps
           
           cp dist/Backup_Facil_Pro $BUILD_DIR/usr/bin/backup-facil-pro
           chmod +x $BUILD_DIR/usr/bin/backup-facil-pro
-          cp assets/icons/icon.png $BUILD_DIR/usr/share/icons/hicolor/256x256/apps/backup-facil-pro.png
+          cp assets/icons/icon.svg $BUILD_DIR/usr/share/icons/hicolor/scalable/apps/backup-facil-pro.svg
           
           cat <<EOF > $BUILD_DIR/usr/share/applications/backup-facil-pro.desktop
           [Desktop Entry]
