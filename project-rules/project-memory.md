@@ -34,7 +34,7 @@
 - (Espaço reservado para limitações conhecidas)
 
 ## Roadmap
-- Migrar o ícone em PNG (`icon.png`) para formato SVG (`icon.svg`) para suporte vetorial aprimorado.
+- ~~Migrar o ícone em PNG (`icon.png`) para formato SVG (`icon.svg`) para suporte vetorial aprimorado.~~ (Concluído)
 
 ## Recursos Não Remover
 - Monitor de Desempenho em Tempo Real (MB/s).

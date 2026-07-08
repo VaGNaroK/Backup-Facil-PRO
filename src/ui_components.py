@@ -1,4 +1,5 @@
 import os
+import time
 import forensics
 import sys
 import multiprocessing
@@ -6,6 +7,7 @@ import re
 import traceback
 from PySide6.QtMultimedia import QSoundEffect
 from PySide6.QtCore import QUrl
+import threading
 from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                                QLabel, QLineEdit, QPushButton, QApplication,
@@ -15,6 +17,25 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QTextCursor
 import logic
+
+_som_ok = None
+def tocar_som_conclusao():
+    """Toca o som de finalização sem travar e previne garbage collection."""
+    global _som_ok
+    try:
+        if getattr(sys, 'frozen', False):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sound_path = os.path.join(base_dir, "assets", "sounds", "done.wav")
+        if os.path.exists(sound_path):
+            if _som_ok is None:
+                _som_ok = QSoundEffect()
+                _som_ok.setSource(QUrl.fromLocalFile(sound_path))
+                _som_ok.setVolume(1.0)
+            _som_ok.play()
+    except Exception as e:
+        print(f"Erro ao tocar som: {e}")
 
 # ==========================================
 # 1. TRABALHADORES EM SEGUNDO PLANO (THREADS)
@@ -481,19 +502,7 @@ class AbaBackup(QWidget):
         self.novo_log.emit(f"✅ SUCESSO: {msg_sucesso}")
         
         # Toca o som de conclusão
-        try:
-            if getattr(sys, 'frozen', False):
-                base_dir = sys._MEIPASS
-            else:
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            sound_path = os.path.join(base_dir, "assets", "sounds", "done.wav")
-            if os.path.exists(sound_path):
-                self.som_ok = QSoundEffect()
-                self.som_ok.setSource(QUrl.fromLocalFile(sound_path))
-                self.som_ok.setVolume(1.0)
-                self.som_ok.play()
-        except Exception as e:
-            print(f"Erro ao tocar som: {e}")
+        tocar_som_conclusao()
 
         QMessageBox.information(self, "Sucesso", msg_sucesso)
 
@@ -774,19 +783,7 @@ class AbaRestauracao(QWidget):
         self.novo_log.emit(f"✅ SUCESSO: {resultado}")
         
         # Toca o som de conclusão
-        try:
-            if getattr(sys, 'frozen', False):
-                base_dir = sys._MEIPASS
-            else:
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            sound_path = os.path.join(base_dir, "assets", "sounds", "done.wav")
-            if os.path.exists(sound_path):
-                self.som_ok = QSoundEffect()
-                self.som_ok.setSource(QUrl.fromLocalFile(sound_path))
-                self.som_ok.setVolume(1.0)
-                self.som_ok.play()
-        except Exception as e:
-            print(f"Erro ao tocar som: {e}")
+        tocar_som_conclusao()
 
         QMessageBox.information(self, "Sucesso", resultado)
 
@@ -966,6 +963,7 @@ class AbaComparar(QWidget):
     def exibir_resultado(self, dados):
         self.btn_comparar.setEnabled(True)
         self.btn_comparar.setText("⚖️ COMPARAR BACKUPS")
+        tocar_som_conclusao()
         
         relatorio = f"=== RELATÓRIO DE COMPARAÇÃO ===\n\n"
         relatorio += f"📁 Backup 1 (Antigo):  {dados.get('total_1', 0)} arquivos\n"
@@ -1426,6 +1424,7 @@ class AbaDuplicados(QWidget):
             self.trabalhador_remocao.start()
 
     def remocao_concluida(self, sucessos):
+        tocar_som_conclusao()
         QMessageBox.information(self, "Concluído", f"Enviados {sucessos} de {self.total_a_remover} arquivos selecionados para a lixeira.")
         self.tree_resultados.clear()
         self.btn_remover.setEnabled(False)
@@ -1602,6 +1601,7 @@ class AbaExclusaoSegura(QWidget):
             self.trabalhador.start()
 
     def exibir_resultados(self, sucessos, falhas):
+        tocar_som_conclusao()
         self.lista_arquivos_pendentes.clear()
         self.tree_resultados.clear()
         self.btn_destruir.setEnabled(True)
@@ -1787,6 +1787,7 @@ class AbaVerificarHash(QWidget):
         self.trabalhador.start()
 
     def exibir_resultados(self, resultados):
+        tocar_som_conclusao()
         self.tree_resultados.clear()
         for filepath, tamanho, hash_calc in resultados:
             item = QTreeWidgetItem(self.tree_resultados)
@@ -1821,19 +1822,50 @@ class AbaVerificarHash(QWidget):
 
 class TrabalhadorCarving(QThread):
     progresso = Signal(str)
+    progresso_eta = Signal(int, str)
     concluido = Signal(bool)
     
     def __init__(self, alvo, destino):
         super().__init__()
         self.alvo = alvo
         self.destino = destino
+        self.stop_event = threading.Event()
+        self.start_time = 0
+        self.last_update = 0
+
+    def abortar(self):
+        self.stop_event.set()
 
     def run(self):
         try:
+            regex_progresso = re.compile(r"Reading sector\s+(\d+)/(\d+)")
+            self.start_time = time.time()
+            self.last_update = 0
+
             def on_log(msg):
                 self.progresso.emit(msg)
+                match = regex_progresso.search(msg)
+                if match:
+                    atual = int(match.group(1))
+                    total = int(match.group(2))
+                    if total > 0:
+                        pct = int((atual / total) * 100)
+                        
+                        agora = time.time()
+                        if agora - self.last_update > 1.0: # Atualiza ETA a cada 1 segundo
+                            decorrido = agora - self.start_time
+                            if decorrido > 0 and atual > 0:
+                                velocidade = atual / decorrido
+                                restantes = total - atual
+                                segundos_restantes = restantes / velocidade if velocidade > 0 else 0
+                                
+                                m, s = divmod(int(segundos_restantes), 60)
+                                h, m = divmod(m, 60)
+                                eta_str = f"Tempo Restante Estimado: {h:02d}h {m:02d}m {s:02d}s"
+                                self.progresso_eta.emit(pct, eta_str)
+                                self.last_update = agora
             
-            sucesso = forensics.executar_photorec(self.alvo, self.destino, callback_log=on_log)
+            sucesso = forensics.executar_photorec(self.alvo, self.destino, callback_log=on_log, stop_event=self.stop_event)
             self.concluido.emit(sucesso)
         except Exception as e:
             self.progresso.emit(f"Erro Crítico no Worker: {str(e)}")
@@ -1923,14 +1955,33 @@ class AbaRecuperacaoDados(QWidget):
 
         layout_principal.addWidget(frame_destino)
 
+        # Barra de Progresso e ETA
+        layout_progresso = QVBoxLayout()
+        self.progresso_bar = QProgressBar()
+        self.progresso_bar.setValue(0)
+        self.progresso_bar.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #444; border-radius: 5px; text-align: center; color: white; font-weight: bold;
+            }
+            QProgressBar::chunk { background-color: #27ae60; width: 20px; }
+        """)
+        self.lbl_eta = QLabel("Progresso: Aguardando início...")
+        self.lbl_eta.setStyleSheet("color: #a0a0a0; font-size: 13px;")
+        self.lbl_eta.setAlignment(Qt.AlignCenter)
+        
+        layout_progresso.addWidget(self.progresso_bar)
+        layout_progresso.addWidget(self.lbl_eta)
+        layout_principal.addLayout(layout_progresso)
+
         # Console Log
         self.log_console = QTextEdit()
         self.log_console.setReadOnly(True)
         self.log_console.setStyleSheet("background-color: #0f0f0f; color: #00ff00; font-family: monospace; border: 1px solid #333;")
         layout_principal.addWidget(self.log_console)
 
-        # Botão de Executar
-        self.btn_iniciar = QPushButton("🚀 INICIAR RECUPERAÇÃO PROFUNDA (FILE CARVING)")
+        # Botões de Executar/Abortar
+        layout_botoes = QHBoxLayout()
+        self.btn_iniciar = QPushButton("🚀 INICIAR RECUPERAÇÃO PROFUNDA")
         self.btn_iniciar.setCursor(Qt.PointingHandCursor)
         self.btn_iniciar.setStyleSheet("""
             QPushButton {
@@ -1940,7 +1991,22 @@ class AbaRecuperacaoDados(QWidget):
             QPushButton:disabled { background-color: #555555; color: #888888; }
         """)
         self.btn_iniciar.clicked.connect(self.iniciar_recuperacao)
-        layout_principal.addWidget(self.btn_iniciar)
+        
+        self.btn_abortar = QPushButton("🛑 ABORTAR RECUPERAÇÃO")
+        self.btn_abortar.setCursor(Qt.PointingHandCursor)
+        self.btn_abortar.setEnabled(False)
+        self.btn_abortar.setStyleSheet("""
+            QPushButton {
+                background-color: #c0392b; color: white; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px;
+            }
+            QPushButton:hover { background-color: #e74c3c; }
+            QPushButton:disabled { background-color: #555555; color: #888888; }
+        """)
+        self.btn_abortar.clicked.connect(self.abortar_recuperacao)
+
+        layout_botoes.addWidget(self.btn_iniciar)
+        layout_botoes.addWidget(self.btn_abortar)
+        layout_principal.addLayout(layout_botoes)
 
     def selecionar_imagem(self):
         caminho, _ = QFileDialog.getOpenFileName(self, "Selecionar Imagem de Disco", "", "Disk Images (*.dd *.img *.iso);;All Files (*)")
@@ -1957,6 +2023,10 @@ class AbaRecuperacaoDados(QWidget):
         self.log_console.append(msg)
         self.log_console.moveCursor(QTextCursor.End)
         self.novo_log.emit(f"[FORENSE] {msg}")
+
+    def atualizar_eta(self, pct, eta_str):
+        self.progresso_bar.setValue(pct)
+        self.lbl_eta.setText(eta_str)
 
     def iniciar_recuperacao(self):
         # Determinar alvo
@@ -1984,17 +2054,31 @@ class AbaRecuperacaoDados(QWidget):
             return
 
         self.btn_iniciar.setEnabled(False)
+        self.btn_abortar.setEnabled(True)
         self.log_console.clear()
+        self.progresso_bar.setValue(0)
+        self.lbl_eta.setText("Calculando tempo estimado...")
         self.print_log("Preparando ambiente para recuperação...")
 
         self.worker = TrabalhadorCarving(alvo, destino)
         self.worker.progresso.connect(self.print_log)
+        self.worker.progresso_eta.connect(self.atualizar_eta)
         self.worker.concluido.connect(self.recuperacao_finalizada)
         self.worker.start()
 
+    def abortar_recuperacao(self):
+        if self.worker and self.worker.isRunning():
+            self.print_log("Solicitando cancelamento (aguarde o PhotoRec desligar com segurança)...")
+            self.btn_abortar.setEnabled(False)
+            self.worker.abortar()
+
     def recuperacao_finalizada(self, sucesso):
         self.btn_iniciar.setEnabled(True)
+        self.btn_abortar.setEnabled(False)
+        tocar_som_conclusao()
         if sucesso:
             QMessageBox.information(self, "Concluído", "Varredura profunda concluída com sucesso! Cheque o console para detalhes e a pasta de destino.")
         else:
             QMessageBox.warning(self, "Aviso", "A varredura encontrou erros ou foi cancelada. Cheque os logs.")
+
+

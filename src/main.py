@@ -1,7 +1,7 @@
 import sys
 import os
 # pyrefly: ignore [missing-import]
-from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QListWidget, QStackedWidget
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from ui_components import AbaBackup, AbaDashboard, AbaRestauracao, AbaComparar, AbaLogs, AbaAgendamento, AbaSobre, AbaDuplicados, AbaVerificarHash, AbaExclusaoSegura, AbaRecuperacaoDados
@@ -41,14 +41,38 @@ QTabBar::tab:selected {
     border-bottom: 2px solid #27ae60;
 }
 QTabBar::tab:hover:!selected { background-color: #3e3e42; }
-QLineEdit, QListWidget, QComboBox, QTextEdit {
+QLineEdit, QComboBox, QTextEdit {
     background-color: #2d2d30;
     border: 1px solid #3f3f46;
     border-radius: 4px;
     padding: 8px;
     color: #ffffff;
 }
-QLineEdit:focus, QListWidget:focus, QComboBox:focus, QTextEdit:focus { border: 1px solid #007acc; }
+QLineEdit:focus, QComboBox:focus, QTextEdit:focus { border: 1px solid #007acc; }
+
+#MenuLateral {
+    background-color: #252526;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    outline: 0;
+    padding: 10px 5px;
+}
+#MenuLateral::item {
+    color: #cccccc;
+    padding: 14px 15px;
+    margin: 3px 5px;
+    border-radius: 6px;
+    font-size: 17px;
+    font-weight: bold;
+}
+#MenuLateral::item:hover {
+    background-color: #3e3e42;
+    color: #ffffff;
+}
+#MenuLateral::item:selected {
+    background-color: #007acc;
+    color: #ffffff;
+}
 QPushButton {
     background-color: #3e3e42;
     border: 1px solid #555555;
@@ -93,8 +117,7 @@ class JanelaPrincipal(QMainWindow):
         self.setWindowTitle("Backup Fácil Professional")
         
         # ✅ APLICANDO O SEU ÍCONE!
-        # TODO: Migrar a utilização do icon.png para icon.svg no futuro para melhor escalonamento vetorial.
-        caminho_icone = get_asset_path("icons/icon.png")
+        caminho_icone = get_asset_path("icons/icon.svg")
         if os.path.exists(caminho_icone):
             self.setWindowIcon(QIcon(caminho_icone))
             
@@ -107,9 +130,13 @@ class JanelaPrincipal(QMainWindow):
         
         widget_central = QWidget()
         self.setCentralWidget(widget_central)
-        layout_principal = QVBoxLayout(widget_central)
+        layout_principal = QHBoxLayout(widget_central)
         
-        self.tabs = QTabWidget()
+        self.menu_lateral = QListWidget()
+        self.menu_lateral.setObjectName("MenuLateral")
+        self.menu_lateral.setFixedWidth(240)
+        
+        self.area_central = QStackedWidget()
         
         self.aba_backup = AbaBackup()
         self.aba_restauracao = AbaRestauracao()
@@ -129,19 +156,38 @@ class JanelaPrincipal(QMainWindow):
         self.aba_recuperacao.novo_log.connect(self.aba_logs.adicionar_log)
         self.aba_exclusao_segura.novo_log.connect(self.aba_logs.adicionar_log)
 
-        self.tabs.addTab(self.aba_backup, "💾 Backup")
-        self.tabs.addTab(self.aba_restauracao, "🕒 Restauração")
-        self.tabs.addTab(self.aba_comparar, "⚖️ Comparar")
-        self.tabs.addTab(self.aba_recuperacao, "🕵️ Recuperação Forense")
-        self.tabs.addTab(self.aba_duplicados, "🗑️ Remover Duplicados")
-        self.tabs.addTab(self.aba_exclusao_segura, "☢️ Exclusão Segura")
-        self.tabs.addTab(self.aba_verificar_hash, "🔐 Verificar Hash")
-        self.tabs.addTab(self.aba_dashboard, "📈 Dashboard")
-        self.tabs.addTab(self.aba_logs, "📝 Logs")
-        self.tabs.addTab(self.aba_agendamento, "📅 Agendamento")
-        self.tabs.addTab(self.aba_sobre, "ℹ️ Sobre")
+        # Adiciona no StackedWidget
+        self.area_central.addWidget(self.aba_backup)
+        self.area_central.addWidget(self.aba_restauracao)
+        self.area_central.addWidget(self.aba_comparar)
+        self.area_central.addWidget(self.aba_recuperacao)
+        self.area_central.addWidget(self.aba_duplicados)
+        self.area_central.addWidget(self.aba_exclusao_segura)
+        self.area_central.addWidget(self.aba_verificar_hash)
+        self.area_central.addWidget(self.aba_dashboard)
+        self.area_central.addWidget(self.aba_logs)
+        self.area_central.addWidget(self.aba_agendamento)
+        self.area_central.addWidget(self.aba_sobre)
 
-        layout_principal.addWidget(self.tabs)
+        # Adiciona os Itens no Menu Lateral
+        self.menu_lateral.addItem("💾 Backup")
+        self.menu_lateral.addItem("🕒 Restauração")
+        self.menu_lateral.addItem("⚖️ Comparar")
+        self.menu_lateral.addItem("🕵️ Recuperação Forense")
+        self.menu_lateral.addItem("🗑️ Remover Duplicados")
+        self.menu_lateral.addItem("☢️ Exclusão Segura")
+        self.menu_lateral.addItem("🔐 Verificar Hash")
+        self.menu_lateral.addItem("📈 Dashboard")
+        self.menu_lateral.addItem("📝 Logs")
+        self.menu_lateral.addItem("📅 Agendamento")
+        self.menu_lateral.addItem("ℹ️ Sobre")
+
+        # Conecta o clique no menu para mudar a tela
+        self.menu_lateral.currentRowChanged.connect(self.area_central.setCurrentIndex)
+        self.menu_lateral.setCurrentRow(0) # Inicia na primeira aba
+
+        layout_principal.addWidget(self.menu_lateral)
+        layout_principal.addWidget(self.area_central)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -150,8 +196,7 @@ if __name__ == "__main__":
     app.setStyleSheet(ESTILO_DARK.replace("{check_icon_path}", check_icon_path))
     
     # Adiciona o ícone também na barra de tarefas do sistema operacional
-    # TODO: Atualizar uso do icon.png para icon.svg no futuro para melhor escalonamento.
-    caminho_icone = get_asset_path("icons/icon.png")
+    caminho_icone = get_asset_path("icons/icon.svg")
     if os.path.exists(caminho_icone):
         app.setWindowIcon(QIcon(caminho_icone))
         

@@ -5,6 +5,7 @@ import ctypes
 import threading
 import shutil
 import time
+import re
 
 def is_admin_or_root():
     """Verifica se o usuário tem privilégios de Administrador/Root."""
@@ -66,12 +67,35 @@ def listar_discos_fisicos():
             
     return discos
 
+def get_photorec_path():
+    """Retorna o caminho correto do executável do photorec."""
+    photorec_cmd = "photorec_win.exe" if os.name == "nt" else "photorec"
+    
+    # Se o executável estiver empacotado no PyInstaller (Windows), pegamos da pasta temporária
+    if getattr(sys, 'frozen', False):
+        bundled_path = os.path.join(sys._MEIPASS, photorec_cmd)
+        if os.path.exists(bundled_path):
+            return bundled_path
+            
+    # Caso contrário, checa se está no PATH
+    if shutil.which(photorec_cmd):
+        return photorec_cmd
+        
+    return None
+
 def verificar_dependencias_forenses():
     """Verifica se o photorec está instalado/acessível."""
-    photorec_cmd = "photorec_win.exe" if os.name == "nt" else "photorec"
-    return shutil.which(photorec_cmd) is not None
+    in_flatpak = os.path.exists("/.flatpak-info")
+    if in_flatpak:
+        try:
+            # Em flatpak, verifica se o comando existe no host real
+            return subprocess.run(["flatpak-spawn", "--host", "which", "photorec"], capture_output=True).returncode == 0
+        except Exception:
+            return False
+            
+    return get_photorec_path() is not None
 
-def executar_photorec(alvo_path, destino_path, callback_log=None, callback_status=None):
+def executar_photorec(alvo_path, destino_path, callback_log=None, callback_status=None, stop_event=None):
     """
     Executa o PhotoRec em modo batch (linha de comando).
     """
@@ -84,7 +108,7 @@ def executar_photorec(alvo_path, destino_path, callback_log=None, callback_statu
         if callback_status: callback_status(False)
         return False
 
-    photorec_cmd = ["photorec_win.exe"] if os.name == "nt" else ["photorec"]
+    photorec_cmd = [get_photorec_path()] if get_photorec_path() else (["photorec_win.exe"] if os.name == "nt" else ["photorec"])
     
     in_flatpak = os.path.exists("/.flatpak-info")
     if in_flatpak:
@@ -106,6 +130,8 @@ def executar_photorec(alvo_path, destino_path, callback_log=None, callback_statu
     
     cmd = photorec_cmd + ["/d", destino_path, "/cmd", alvo_path, "partition_none,search"]
     
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    
     try:
         creationflags = 0
         if os.name == 'nt':
@@ -120,18 +146,46 @@ def executar_photorec(alvo_path, destino_path, callback_log=None, callback_statu
         )
         
         while True:
+            if stop_event and stop_event.is_set():
+                process.terminate()
+                if callback_log: callback_log("🛑 Processo de recuperação ABORTADO pelo usuário.")
+                break
+
             line = process.stdout.readline()
             if not line and process.poll() is not None:
                 break
+                
             if line and callback_log:
-                line_clean = line.strip()
+                # Remove sequências ANSI de escape
+                line_clean = ansi_escape.sub('', line).strip()
                 if line_clean:
-                    # Filtramos linhas irrelevantes
+                    # O Photorec atualiza linhas usando carriage return (ou limpa tela). 
+                    # Filtramos linhas irrelevantes para não sujar o log visualmente.
                     if "Pass" in line_clean or "recovered" in line_clean or "Error" in line_clean or "PhotoRec" in line_clean:
                         callback_log(line_clean)
                         
         return_code = process.poll()
         sucesso = (return_code == 0)
+        
+        # 🛡️ Correção de Permissões (Chown)
+        # Se rodamos como root (sudo), os arquivos salvos pertencerão ao root.
+        # Vamos transferir a posse de volta para o usuário original que chamou o sudo.
+        if os.name != 'nt' and is_admin_or_root():
+            sudo_uid = os.environ.get("SUDO_UID")
+            sudo_gid = os.environ.get("SUDO_GID")
+            if sudo_uid and sudo_gid:
+                uid = int(sudo_uid)
+                gid = int(sudo_gid)
+                if callback_log: callback_log("🔒 Ajustando permissões de acesso para o seu usuário...")
+                try:
+                    for root_dir, dirs, files in os.walk(destino_path):
+                        os.chown(root_dir, uid, gid)
+                        for d in dirs:
+                            os.chown(os.path.join(root_dir, d), uid, gid)
+                        for f in files:
+                            os.chown(os.path.join(root_dir, f), uid, gid)
+                except Exception as e:
+                    if callback_log: callback_log(f"⚠️ Aviso: Falha ao ajustar algumas permissões ({e})")
         
         if sucesso:
             if callback_log: callback_log("✅ Varredura profunda finalizada com sucesso!\nVerifique as subpastas criadas na pasta de destino escolhida.")

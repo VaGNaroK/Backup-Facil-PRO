@@ -23,7 +23,7 @@ import send2trash
 # ==========================================
 # FONTE ÚNICA DE VERDADE (VERSÃO DO APP)
 # ==========================================
-APP_VERSION = "0.4.3-hotfix"
+APP_VERSION = "0.4.4"
 
 logger = logging.getLogger("backup_facil")
 logger.setLevel(logging.DEBUG)
@@ -951,12 +951,25 @@ def excluir_arquivo_seguro(filepath, nivel="padrao"):
     passes_map = {"rapido": 1, "padrao": 3, "paranoia": 7}
     passes = passes_map.get(nivel.lower(), 3)
     
-    # Prioriza o utilitário shred (Nativo Linux/macOS) que ignora caches de FS
-    if sys.platform != 'win32' and shutil.which('shred'):
-        try:
-            subprocess.run(['shred', '-u', '-z', '-n', str(passes), filepath], check=True, stderr=subprocess.DEVNULL)
-            return True
-        except subprocess.CalledProcessError:
-            pass # Se falhar por permissão ou montagem, cai pro Python
+    # Flatpak aware
+    in_flatpak = os.path.exists("/.flatpak-info")
+    
+    if sys.platform != 'win32':
+        shred_cmd = None
+        if in_flatpak:
+            try:
+                if subprocess.run(["flatpak-spawn", "--host", "which", "shred"], capture_output=True).returncode == 0:
+                    shred_cmd = ["flatpak-spawn", "--host", "shred"]
+            except Exception:
+                pass
+        elif shutil.which('shred'):
+            shred_cmd = ['shred']
+            
+        if shred_cmd:
+            try:
+                subprocess.run(shred_cmd + ['-u', '-z', '-n', str(passes), filepath], check=True, stderr=subprocess.DEVNULL)
+                return True
+            except subprocess.CalledProcessError:
+                pass # Se falhar por permissão ou montagem, cai pro Python
             
     return exclusao_segura_python(filepath, passes)

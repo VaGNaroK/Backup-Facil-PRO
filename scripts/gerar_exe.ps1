@@ -58,6 +58,38 @@ if (-not $?) {
     exit
 }
 
+# 0.3. Baixar e extrair o TestDisk (photorec_win.exe) automaticamente
+$binDir = Join-Path $projectRoot.Path "assets\bin"
+if (-not (Test-Path $binDir)) {
+    New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+}
+$photorecPath = Join-Path $binDir "photorec_win.exe"
+
+if (-not (Test-Path $photorecPath)) {
+    Write-Host "`n[i] Baixando TestDisk (photorec_win.exe) do servidor CGSecurity..." -ForegroundColor Yellow
+    $zipPath = Join-Path $projectRoot.Path "testdisk.zip"
+    $tempDir = Join-Path $projectRoot.Path "temp_testdisk"
+    
+    try {
+        Invoke-WebRequest -Uri "https://www.cgsecurity.org/testdisk-7.2.win.zip" -OutFile $zipPath
+        Write-Host "[i] Extraindo arquivo ZIP..." -ForegroundColor Yellow
+        Expand-Archive -Path $zipPath -DestinationPath $tempDir -Force
+        
+        $extractedExe = Join-Path $tempDir "testdisk-7.2\photorec_win.exe"
+        if (Test-Path $extractedExe) {
+            Copy-Item -Path $extractedExe -Destination $photorecPath -Force
+            Write-Host "[OK] photorec_win.exe injetado com sucesso na pasta assets\bin!" -ForegroundColor Green
+        } else {
+            Write-Host "[X] ERRO: Nao foi possivel encontrar o photorec_win.exe no zip extraido." -ForegroundColor Red
+        }
+    } catch {
+        Write-Host "[X] ERRO ao baixar o TestDisk: $_" -ForegroundColor Red
+    } finally {
+        if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
+        if (Test-Path $tempDir) { Remove-Item -Recurse -Force -Path $tempDir }
+    }
+}
+
 # 1. Obter a versao do arquivo logic.py
 $version = "0.0.0"
 $match = Select-String -Path "src\logic.py" -Pattern 'APP_VERSION = "(.*?)"'
@@ -76,7 +108,7 @@ if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
 Remove-Item -Force "*.spec" -ErrorAction SilentlyContinue
 
 Write-Host "`n[2] Iniciando o PyInstaller (PySide6)..." -ForegroundColor Cyan
-& $pythonExe -m PyInstaller --noconsole --onefile --name $appName --icon="assets\icons\icon.ico" --add-data "assets;assets" --paths "src" src\main.py
+& $pythonExe -m PyInstaller --noconsole --onefile --name $appName --icon="assets\icons\icon.ico" --add-data "assets;assets" --add-binary "assets\bin\photorec_win.exe;." --paths "src" src\main.py
 
 Write-Host "`n[3] Limpeza final profunda..." -ForegroundColor Cyan
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }

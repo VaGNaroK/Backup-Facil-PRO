@@ -82,6 +82,10 @@ sudo apt install libdbus-1-dev libglib2.0-dev python3-dev python3-venv build-ess
 
 Este é o método recomendado para garantir compatibilidade universal. Todo o processo de compilação e nomeação da versão atual foi automatizado.
 
+> [!WARNING]
+> **Dependências de Host (Para Usuários Flatpak):** Devido à alta segurança da Sandbox do Flatpak, o aplicativo não consegue acessar partições físicas bloqueadas de dentro da bolha. Ferramentas pesadas como a Recuperação Forense e a Exclusão Segura fazem "fugas controladas" usando \`flatpak-spawn\`. 
+> Portanto, para que essas abas funcionem, o usuário **deve ter os pacotes \`coreutils\` e \`testdisk\` instalados no sistema Linux hospedeiro** (\`sudo apt install coreutils testdisk\`).
+
 **⚠️ Pré-requisitos para empacotamento:**
 Certifique-se de que o sistema possui as ferramentas oficiais do flatpak instaladas:
 ```bash

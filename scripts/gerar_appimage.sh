@@ -38,7 +38,7 @@ fi
 # Usar --onedir é vital para AppImage para evitar lentidão e dupla-extração na abertura
 echo -e "\n⏳ Compilando o binário a partir do código fonte (modo pasta/onedir)..."
 python -m PyInstaller --noconsole --onedir --name "Backup_Facil_Pro" \
-    --icon="assets/icons/icon.png" \
+    --icon="assets/icons/icon.svg" \
     --add-data "assets:assets" \
     --hidden-import=plyer.platforms.linux.notification \
     --paths "src" \
@@ -63,8 +63,9 @@ echo -e "⏳ Movendo arquivos compilados..."
 cp -r dist/Backup_Facil_Pro/* $APPDIR/usr/bin/
 
 # 7. Registra ícone na raiz (necessário pro AppImage) e na pasta share
-cp assets/icons/icon.png $APPDIR/backup-facil-pro.png
-cp assets/icons/icon.png $APPDIR/usr/share/icons/hicolor/256x256/apps/backup-facil-pro.png
+cp assets/icons/icon.svg $APPDIR/backup-facil-pro.svg
+mkdir -p $APPDIR/usr/share/icons/hicolor/scalable/apps
+cp assets/icons/icon.svg $APPDIR/usr/share/icons/hicolor/scalable/apps/backup-facil-pro.svg
 
 # 8. Cria o arquivo .desktop na raiz (obrigatório pro AppImage) e na pasta share
 cat <<EOF > $APPDIR/backup-facil-pro.desktop

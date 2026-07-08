@@ -1,6 +1,22 @@
 📝 Changelog - Backup Fácil Professional
 Este arquivo registra todas as mudanças notáveis feitas no projeto Backup Fácil Professional desde o seu início.
 
+## [0.4.4] - 2026-07-08
+
+### Adicionado
+- **Ícone SVG:** Migração do ícone base do projeto (PNG para SVG) para oferecer melhor suporte vetorial e escalabilidade em todas as plataformas de empacotamento.
+- **Recuperação Forense (File Carving):** Nova ferramenta imersiva que integra o \`photorec\` silenciosamente, permitindo escaneamento profundo para recuperação de arquivos deletados ou partições formatadas, ignorando a tabela de arquivos. O processo exibe em tempo real o progresso (barra) e tempo restante (ETA Matemático).
+- **Tratamento de Privilégios Automático:** Arquivos recuperados com sucesso recebem automaticamente a devolução de posse (`chown`) baseados nas variáveis `SUDO_UID` e `SUDO_GID`, evitando pastas travadas por credenciais root.
+- **Notificação Sonora Global:** Integrada e padronizada a reprodução do efeito sonoro de conclusão (`done.wav`) para a finalização de todas as ferramentas complexas, incluindo Verificação de Hash, File Carving e Exclusão Segura.
+- **Automação de Dependência no Windows:** O script de build (`gerar_exe.ps1`) agora rastreia, baixa e extrai automaticamente a ferramenta TestDisk (CGSecurity) emulando a facilidade de gerenciadores de pacotes. O binário `photorec_win.exe` é automaticamente embutido no arquivo executável final via PyInstaller.
+- **Escape Supremo de Sandbox no Flatpak:** A lógica de checagem do módulo forense e o utilitário de Exclusão Segura (`shred`) foram reprogramados para detectar execuções isoladas dentro de contêineres Flatpak. Em vez de falhar silenciosamente, o app agora despacha sub-comandos (`flatpak-spawn --host`) para utilizar as ferramentas pesadas nativas instaladas na máquina hospedeira.
+
+### Corrigido
+- **Falso Positivo de CI/CD:** A dependência obsoleta `extundelete` foi removida silenciosamente do `.github/workflows/ci-cd.yml` impedindo bloqueios artificiais na esteira automática.
+
+### Modificado
+- **Arquitetura da Janela Principal (Sidebar):** O obsoleto sistema horizontal de abas (`QTabWidget`) que espremia a UI em telas menores foi completamente substituído por um elegante Menu Lateral Vertical (`QListWidget` e `QStackedWidget`), garantindo responsividade e abrindo suporte para escalabilidade infinita de novas ferramentas.
+
 ## [0.4.3] - 2026-07-06
 
 ### Adicionado

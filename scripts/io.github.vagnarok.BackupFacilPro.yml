@@ -51,7 +51,7 @@ modules:
       - chmod +x /app/bin/backup-facil-pro
       
       # Registrando Ícone e Menu Iniciar
-      - install -Dm644 assets/icons/icon.png /app/share/icons/hicolor/256x256/apps/io.github.vagnarok.BackupFacilPro.png
+      - install -Dm644 assets/icons/icon.svg /app/share/icons/hicolor/scalable/apps/io.github.vagnarok.BackupFacilPro.svg
       - mkdir -p /app/share/applications
       - |
         cat <<EOF > /app/share/applications/io.github.vagnarok.BackupFacilPro.desktop
